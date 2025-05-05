@@ -31,6 +31,7 @@ model User {
   chatsReceived    Chat[]         @relation("ReceiverRelation")
   createdRooms     Room[]         @relation("CreatorRelation")
   notifications    Notification[]
+  Answer           Answer[]
 
   @@map("users")
 }
@@ -68,8 +69,62 @@ model Customer {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  answers   Answer[]
 
   @@map("customers")
+}
+
+model Category {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  name      String     @unique
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  questions Question[]
+
+  @@map("categories")
+}
+
+model Question {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  question   String
+  categoryId String   @db.ObjectId
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  answers    Answer[]
+
+  @@map("questions")
+}
+
+model Answer {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  answer     Int
+  questionId String   @db.ObjectId
+  question   Question @relation(fields: [questionId], references: [id])
+  userId     String   @db.ObjectId
+  customer   Customer @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  User       User     @relation(fields: [userId], references: [id])
+
+  @@map("answers")
+}
+
+model Event {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  slug        String   @unique
+  img         String?
+  description String
+  location    String?
+  date        DateTime
+  startTime   String
+  endTime     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("events")
 }
 
 model Blog {
