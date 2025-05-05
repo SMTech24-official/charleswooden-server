@@ -60,97 +60,16 @@ model Admin {
 }
 
 model Customer {
-  id              String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId          String           @unique @db.ObjectId
-  firstName       String?
-  lastName        String?
-  location        String?
-  user            User             @relation(fields: [userId], references: [id])
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  TourBooking     TourBooking[]
-  FeedBack        FeedBack[]
-  vehicleBookings VehicleBooking[]
-  roomBookings    RoomBooking[]
-  transactions    Transaction[]
-
-  @@map("customers")
-}
-
-model Category {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String   @unique
+  userId    String   @unique @db.ObjectId
+  firstName String?
+  lastName  String?
+  location  String?
+  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("categories")
-}
-
-model Vehicle {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  name        String      @unique
-  vehicleType VehicleType
-  pricePerHR  Float
-  img         String
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  @@map("vehicles")
-}
-
-model Image {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  url            String
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  tourPackageId  String?       @db.ObjectId
-  hotelPackageId String?       @db.ObjectId
-  tourPackages   TourPackage?  @relation(fields: [tourPackageId], references: [id])
-  hotelPackage   HotelPackage? @relation(fields: [hotelPackageId], references: [id])
-
-  @@map("images")
-}
-
-model TourPackage {
-  id               String              @id @default(auto()) @map("_id") @db.ObjectId
-  title            String
-  description      String
-  slug             String
-  location         String
-  tourType         String // private, luxury, small group
-  category         TourPackageCategory
-  duration         Int
-  price            Float
-  images           Image[]
-  isVehicleService Boolean             @default(false)
-  vehicleType      TourVehicleType?
-  vehicleDuration  Int?
-  vehiclePrice     Float?
-  tourBookings     TourBooking[]
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-
-  @@map("tour_packages")
-}
-
-model HotelPackage {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  title         String
-  description   String
-  slug          String
-  roomCategory  String
-  duration      String
-  price         Float
-  bedRoom       Int
-  bathRoom      Int
-  livingRoom    Int
-  kitchen       Int
-  images        Image[]
-  hotelBookings RoomBooking[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@map("hotel_packages")
+  @@map("customers")
 }
 
 model Blog {
@@ -164,126 +83,6 @@ model Blog {
   imageId     String?  @db.ObjectId
 
   @@map("blogs")
-}
-
-model TourBooking {
-  id            String        @id @default(auto()) @map("_id") @db.ObjectId
-  tourPackageId String        @db.ObjectId
-  tourPackage   TourPackage   @relation(fields: [tourPackageId], references: [id])
-  availableDate DateTime
-  duration      Int
-  groupSize     Int
-  guests        Guest[]
-  customerId    String        @db.ObjectId
-  customer      Customer      @relation(fields: [customerId], references: [id])
-  isCancelled   Boolean       @default(false)
-  cancelReason  String?
-  isPaid        Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  feedBacks     FeedBack[]
-  transactions  Transaction[]
-
-  @@map("tour_bookings")
-}
-
-model Guest {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  fullName       String
-  email          String
-  isAdult        Boolean
-  age            Int
-  contactNo      String
-  requestMessage String
-  tourBookingId  String?      @db.ObjectId
-  tourBooking    TourBooking? @relation(fields: [tourBookingId], references: [id])
-  roomBookingId  String?      @db.ObjectId
-  roomBooking    RoomBooking? @relation(fields: [roomBookingId], references: [id])
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  @@map("guests")
-}
-
-model VehicleBooking {
-  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
-  pickUpAddr           String
-  pickUpDate           DateTime
-  pickUpTime           String
-  vehicleType          String
-  restaurant           String // drinking restaurant name
-  address              String // drinking restaurant location
-  expTimeSty           String // 5 hours, 2 hours
-  sameCarReturn        Boolean
-  dropOffAddr          String
-  needsAdditionalStops Boolean
-  customerId           String   @db.ObjectId
-  customer             Customer @relation(fields: [customerId], references: [id])
-  isCancelled          Boolean  @default(false)
-  cancellReason        String?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
-
-  @@map("vehicle_bookings")
-}
-
-model RoomBooking {
-  id             String        @id @default(auto()) @map("_id") @db.ObjectId
-  checkInDate    DateTime
-  checkOutDate   DateTime
-  numberOfGuests Int
-  roomType       String // deluxe                        
-  guests         Guest[]
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  isCancelled    Boolean       @default(false)
-  cancelReason   String?
-  customerId     String        @db.ObjectId
-  isPaid         Boolean       @default(false)
-  customer       Customer      @relation(fields: [customerId], references: [id])
-  feedBacks      FeedBack[]
-  transactions   Transaction[]
-  HotelPackage   HotelPackage? @relation(fields: [hotelPackageId], references: [id])
-  hotelPackageId String?       @db.ObjectId
-
-  @@map("room_bookings")
-}
-
-model Transaction {
-  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
-  amount                Float
-  currency              Currency
-  billingAddress        Json?
-  stripePaymentIntentId String?
-  clientSecret          String?
-  paymentMethodId       String?
-  status                PaymentStatus
-  tourBookingId         String?       @db.ObjectId
-  tourBoooking          TourBooking?  @relation(fields: [tourBookingId], references: [id])
-  roomBookingId         String?       @db.ObjectId
-  roomBooking           RoomBooking?  @relation(fields: [roomBookingId], references: [id])
-  customerId            String        @db.ObjectId
-  customer              Customer      @relation(fields: [customerId], references: [id])
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-
-  @@map("transactions")
-}
-
-model FeedBack {
-  id            String       @id @default(auto()) @map("_id") @db.ObjectId
-  tourBookingId String?      @db.ObjectId
-  tourBoooking  TourBooking? @relation(fields: [tourBookingId], references: [id])
-  roomBookingId String?      @db.ObjectId
-  roomBooking   RoomBooking? @relation(fields: [roomBookingId], references: [id])
-  customerId    String       @db.ObjectId
-  customer      Customer     @relation(fields: [customerId], references: [id])
-  rating        Float
-  comment       String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-
-  @@map("reviews")
 }
 
 model RoomUser {
@@ -380,46 +179,6 @@ enum UserStatus {
 enum RoomType {
   PRIVATE
   GROUP
-}
-
-enum TourPackageCategory {
-  SEA_TOUR
-  LAND_TOUR
-  CULTURAL_TOUR
-  GASTRO_WINE_TOUR
-}
-
-model Book {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  description String
-  img         String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("books")
-}
-
-enum BookingStatus {
-  PENDING
-  OFFERED
-  ASSIGNED_TO_DRIVER
-  ASSIGNED_TO_DELIVERYMAN
-  COMPLETED
-  CANCELLED
-  REJECTED
-}
-
-enum TourVehicleType {
-  BOAT
-  CAR
-}
-
-enum VehicleType {
-  BOAT
-  CAR
-  VAN
-  AIRCRAFT
 }
 
 enum PaymentStatus {
