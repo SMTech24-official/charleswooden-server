@@ -55,9 +55,17 @@ export class CategoryService {
   }
 
   async findOne(id: string) {
-    const isCategoryExists = await this.prisma.category.findUnique({
-      where: { id },
-    });
+    let isCategoryExists = await this.prisma.category
+      .findUnique({
+        where: { id },
+      })
+      .catch(() => null);
+
+    if (!isCategoryExists) {
+      isCategoryExists = await this.prisma.category.findUnique({
+        where: { slug: id },
+      });
+    }
 
     if (!isCategoryExists) {
       throw new ApiError(HttpStatus.NOT_FOUND, 'Category Not Found');
