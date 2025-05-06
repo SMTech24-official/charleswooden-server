@@ -33,6 +33,7 @@ model User {
   notifications    Notification[]
   Answer           Answer[]
 
+  @@unique([username, email, contactNo])
   @@map("users")
 }
 

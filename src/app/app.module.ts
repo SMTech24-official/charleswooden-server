@@ -1,4 +1,3 @@
-import { BookModule } from '@/modules/book/book.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { UsersService } from '@/modules/users/users.service';
 import { Module } from '@nestjs/common';
@@ -12,15 +11,10 @@ import { AppController } from './app.controller';
 import { WebSocketService } from '@/ws/websocket.service';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
-import { TourPackageModule } from '@/modules/tour-package/tour-package.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { HotelPackageModule } from '@/modules/hotel-package/hotel-package.module';
-import { TourBookingModule } from '@/modules/tour-booking/tour-booking.module';
-import { VehicleModule } from '@/modules/vehicle/vehicle.module';
-import { RoomBookingModule } from '@/modules/room-booking/room-booking.module';
-import { TransactionModule } from '@/modules/transaction/transaction.module';
 import { AuthGuard } from '@/modules/auth/auth.guard';
 import { RolesGuard } from '@/modules/roles/roles.guard';
+import { CategoryModule } from '@/modules/category/category.module';
 
 @Module({
   imports: [
@@ -47,16 +41,10 @@ import { RolesGuard } from '@/modules/roles/roles.guard';
         },
       ],
     }),
-    BookModule,
     AuthModule,
     UsersModule,
     BlogModule,
-    TourPackageModule,
-    HotelPackageModule,
-    TourBookingModule,
-    VehicleModule,
-    RoomBookingModule,
-    TransactionModule,
+    CategoryModule,
   ],
   controllers: [AppController],
   providers: [
@@ -66,8 +54,8 @@ import { RolesGuard } from '@/modules/roles/roles.guard';
     WebSocketService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
-    { provide: APP_GUARD, useClass: AuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: AuthGuard }, // authentication guard
+    { provide: APP_GUARD, useClass: RolesGuard }, //authorization guard
   ],
 })
 export class AppModule {}
