@@ -154,7 +154,7 @@ class QueryBuilder {
     return this;
   }
 
-  range() {
+   range() {
     // param dateRange = createdAt[2025-02-19T10:13:59.425Z,2025-02-20T10:13:59.425Z];updatedAt[2025-02-19T12:00:00.000Z,2025-02-19T15:00:00.000Z]
     const dateRanges = this.query.dateRange
       ? (this.query.dateRange as string).split(';')

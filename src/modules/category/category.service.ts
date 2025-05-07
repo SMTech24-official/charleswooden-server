@@ -11,6 +11,7 @@ export class CategoryService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.CategoryCreateInput) {
+    
     const slug = slugify(data.name, { lower: true, strict: true });
 
     const isExists: Category | null = await this.prisma.category.findFirst({

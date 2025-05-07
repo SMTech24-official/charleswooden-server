@@ -1,20 +1,55 @@
-// src/common/pipes/parse-data.pipe.ts
-import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
+import {
+  PipeTransform,
+  Injectable,
+  BadRequestException,
+  ArgumentMetadata,
+} from '@nestjs/common';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
 
 @Injectable()
 export class ParseDataPipe implements PipeTransform {
-  transform(value: any) {
+  async transform(value: any, metadata: ArgumentMetadata) {
     try {
-      // If value is string, parse it first
-      const data: any = typeof value === 'string' ? JSON.parse(value) : value;
+      console.log(value);
+      // Step 1: If `value.data` is a string, parse it.
+      const parsedData =
+        typeof value?.data === 'string' ? JSON.parse(value.data) : value;
 
-      if (data && typeof data.data === 'string') {
-        return JSON.parse(data.data); // inner JSON object
+      // Step 2: Apply class-validator on the parsed object
+      if (metadata.metatype && typeof metadata.metatype === 'function') {
+        const dtoObject = plainToInstance(metadata.metatype, parsedData);
+        const errors = await validate(dtoObject, {
+          whitelist: true,
+          forbidNonWhitelisted: true,
+        });
+
+        if (errors.length > 0) {
+          const errorMessages = errors.flatMap((err) =>
+            Object.values(err.constraints || {}).map((msg) => ({
+              path: err.property,
+              message: msg,
+            })),
+          );
+
+          throw new BadRequestException({
+            success: false,
+            message: 'Validation failed',
+            errorMessages,
+          });
+        }
+
+        return dtoObject;
       }
 
-      return data; // fallback
+      // Fallback
+      return parsedData;
     } catch (error) {
-      throw new BadRequestException('Invalid data format');
+      throw new BadRequestException({
+        success: false,
+        message: error.message || 'Invalid data format or structure',
+        errorMessages: [],
+      });
     }
   }
 }

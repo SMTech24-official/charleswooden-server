@@ -116,7 +116,7 @@ model Event {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   slug        String   @unique
-  img         String?
+  images      String[] @default([])
   description String
   location    String?
   date        DateTime
@@ -213,8 +213,6 @@ model Chat {
 enum Role {
   SUPER_ADMIN
   ADMIN
-  DRIVER
-  DELIVERYMAN
   CUSTOMER
 }
 
