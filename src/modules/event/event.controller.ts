@@ -48,8 +48,10 @@ export class EventController {
       images =
         await this.fileService.uploadMultipleToDigitalOcean(uploadableFiles);
     }
+
+    createEventDto.date = new Date(createEventDto.date).toISOString();
     const data = { ...createEventDto, images };
-    const result = this.eventService.create(data);
+    const result = await this.eventService.create(data);
 
     return ResponseService.formatResponse({
       statusCode: HttpStatus.CREATED,

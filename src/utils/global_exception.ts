@@ -159,6 +159,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorMessages = [{ path: '', message: message }];
     }
 
+    this.configService.get('NODE_ENV') !== 'production' &&
+      console.log(errorMessages);
     response.status(statusCode).json({
       success: false,
       message,

@@ -11,9 +11,8 @@ import { ApiError } from '@/utils/api_error';
 @Injectable()
 export class EventService {
   constructor(private prisma: PrismaService) {}
-  async create(createAnswerDto: CreateEventDto) {
-    await this.prisma.event.createMany({ data: createAnswerDto });
-    return 'event create successfully';
+  async create(payload: CreateEventDto) {
+    return await this.prisma.event.create({ data: payload });
   }
 
   async findAll(req: Request): Promise<IGenericResponse<Event>> {
