@@ -15,6 +15,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AuthGuard } from '@/modules/auth/auth.guard';
 import { RolesGuard } from '@/modules/roles/roles.guard';
 import { CategoryModule } from '@/modules/category/category.module';
+import { QuestionModule } from '@/modules/question/question.module';
 import { AnswerModule } from '@/modules/answer/answer.module';
 import { EventModule } from '@/modules/event/event.module';
 
@@ -47,6 +48,7 @@ import { EventModule } from '@/modules/event/event.module';
     UsersModule,
     BlogModule,
     CategoryModule,
+    QuestionModule,
     AnswerModule,
     EventModule
   ],
