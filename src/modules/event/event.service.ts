@@ -13,7 +13,7 @@ import slugify from 'slugify';
 export class EventService {
   constructor(private prisma: PrismaService) {}
 
-  async create(payload: CreateEventDto) {
+  async create(payload: Prisma.EventCreateInput, images: string[]) {
     const slug = slugify(payload.title, { lower: true, strict: true });
 
     const isExists: Event | null = await this.prisma.event.findFirst({
@@ -24,7 +24,25 @@ export class EventService {
       throw new ApiError(HttpStatus.CONFLICT, 'Same Name Conflict');
     }
 
-    return await this.prisma.event.create({ data: payload });
+    const result = await this.prisma.event.create({
+      data: { ...payload, slug },
+    });
+
+    const imagesData = Array.isArray(images)
+      ? images.map((img: string) => ({
+          url: img,
+          eventId: result.id,
+        }))
+      : [];
+
+    await this.prisma.image.createMany({ data: imagesData });
+
+    return await this.prisma.event.findUnique({
+      where: { id: result.id },
+      include: {
+        images: true,
+      },
+    });
   }
 
   async findAll(req: Request): Promise<IGenericResponse<Event>> {
@@ -48,6 +66,9 @@ export class EventService {
       .sort()
       .paginate()
       .fields()
+      .include({
+        images: true,
+      })
       .populate(populateFields)
       .execute();
 
@@ -57,57 +78,85 @@ export class EventService {
   }
 
   async findOne(id: string) {
-    let isAnswerExist = await this.prisma.event
+    let isEventExist = await this.prisma.event
       .findUnique({
         where: { id },
+        include: {
+          images: true,
+        },
       })
       .catch(() => null);
 
-    if (!isAnswerExist) {
-      isAnswerExist = await this.prisma.event.findUnique({
-        where: { id },
+    if (!isEventExist) {
+      isEventExist = await this.prisma.event.findUnique({
+        where: { slug: id },
+        include: {
+          images: true,
+        },
       });
     }
 
-    if (!isAnswerExist) {
+    if (!isEventExist) {
       throw new ApiError(HttpStatus.NOT_FOUND, 'Event Not Found');
     }
 
-    return isAnswerExist;
+    return isEventExist;
   }
 
-  async update(id: string, data: Prisma.EventUpdateInput) {
+  async update(id: string, data: Prisma.EventUpdateInput, images: string[]) {
     let slug = '';
 
     if (data?.title) {
       slug = slugify(data?.title as string, { lower: true, strict: true });
     }
 
-    const isAnswerExist = await this.prisma.event.findUnique({
+    const isEventExist = await this.prisma.event.findUnique({
       where: { id },
     });
 
-    if (!isAnswerExist) {
+    if (!isEventExist) {
       throw new ApiError(HttpStatus.NOT_FOUND, 'Event Not Found');
     }
 
-    return this.prisma.event.update({
+    const result = await this.prisma.event.update({
       where: { id },
       data: { ...data, ...(slug ? { slug } : {}) },
+    });
+
+    const imagesData = Array.isArray(images)
+      ? images.map((img: string) => ({
+          url: img,
+          eventId: result.id,
+        }))
+      : [];
+
+    await this.prisma.image.createMany({ data: imagesData });
+
+    return await this.prisma.event.findUnique({
+      where: { id: result.id },
+      include: {
+        images: true,
+      },
     });
   }
 
   async remove(id: string) {
-    const isAnswerExist = await this.prisma.event.findUnique({
+    const isEventExist = await this.prisma.event.findUnique({
       where: { id },
     });
 
-    if (!isAnswerExist) {
+    if (!isEventExist) {
       throw new ApiError(HttpStatus.NOT_FOUND, 'Event Not Found');
     }
 
-    return await this.prisma.event.delete({
+    await this.prisma.image.deleteMany({
+      where: { eventId: id },
+    });
+
+    const result = await this.prisma.event.delete({
       where: { id },
     });
+
+    return result;
   }
 }

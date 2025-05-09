@@ -1,27 +1,28 @@
-import { IsString, IsOptional, IsDateString, Length } from 'class-validator';
+import { IsString, IsDate, IsOptional, IsNotEmpty } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateEventDto {
   @IsString()
-  @Length(1, 255)
+  @IsNotEmpty()
   title: string;
 
   @IsString()
-  @Length(1, 255)
-  slug: string;
-
-  @IsString()
+  @IsNotEmpty()
   description: string;
 
   @IsOptional()
   @IsString()
   location?: string;
 
-  @IsDateString()
-  date: string; // ISO 8601 format (e.g., "2025-06-15")
+  @Transform(({ value }) => new Date(value))
+  @IsDate()
+  date: Date;
 
   @IsString()
-  startTime: string; // e.g., "14:30"
+  @IsNotEmpty()
+  startTime: string;
 
   @IsString()
-  endTime: string; // e.g., "16:00"
+  @IsNotEmpty()
+  endTime: string;
 }

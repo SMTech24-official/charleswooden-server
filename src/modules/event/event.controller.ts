@@ -15,7 +15,6 @@ import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { CustomFileFieldsInterceptor } from '@/helper/file_interceptor';
-import { ParseDataPipe } from '@/pipes/parse_data';
 import { ParseFormDataInterceptor } from '@/helper/form_data_interceptor';
 import { FileService } from '@/helper/file.service';
 import { ResponseService } from '@/utils/response';
@@ -32,6 +31,7 @@ export class EventController {
   ) {}
 
   @Post()
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   @UseInterceptors(
     CustomFileFieldsInterceptor([{ name: 'images', maxCount: 3 }]),
     ParseFormDataInterceptor,
@@ -49,9 +49,8 @@ export class EventController {
         await this.fileService.uploadMultipleToDigitalOcean(uploadableFiles);
     }
 
-    createEventDto.date = new Date(createEventDto.date).toISOString();
-    const data = { ...createEventDto, images };
-    const result = await this.eventService.create(data);
+    const data = { ...createEventDto, slug: '' };
+    const result = await this.eventService.create(data, images);
 
     return ResponseService.formatResponse({
       statusCode: HttpStatus.CREATED,
@@ -84,11 +83,26 @@ export class EventController {
   }
 
   @Patch(':id')
+  @UseInterceptors(
+    CustomFileFieldsInterceptor([{ name: 'images', maxCount: 3 }]),
+    ParseFormDataInterceptor,
+  )
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  async update(@Param('id') id: string, updateAnswerData?: UpdateEventDto) {
-    const result = await this.eventService.update(id, {
-      ...updateAnswerData,
-    });
+  async update(
+    @Param('id') id: string,
+    @UploadedFiles() files: Record<string, Express.Multer.File[]>,
+    @Body() updateEventData?: UpdateEventDto,
+  ) {
+    let images: string[] | null = [];
+
+    const uploadableFiles = files?.images;
+
+    if (Array.isArray(uploadableFiles) && uploadableFiles?.length > 0) {
+      images =
+        await this.fileService.uploadMultipleToDigitalOcean(uploadableFiles);
+    }
+
+    const result = await this.eventService.update(id, updateEventData, images);
 
     return ResponseService.formatResponse({
       statusCode: HttpStatus.OK,
