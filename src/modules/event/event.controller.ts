@@ -24,7 +24,7 @@ import { Roles } from '../roles/roles.decorator';
 import { Request } from 'express';
 import { Role } from '@/enum/role.enum';
 
-@Controller('event')
+@Controller('events')
 export class EventController {
   constructor(
     private readonly eventService: EventService,

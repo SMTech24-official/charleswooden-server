@@ -5,13 +5,25 @@ import { PrismaService } from '@/helper/prisma.service';
 import QueryBuilder from '@/utils/query_builder';
 import { IGenericResponse } from '@/interface/common';
 import { Request } from 'express';
-import { Prisma, Role } from '@prisma/client';
+import { Event, Prisma, Role } from '@prisma/client';
 import { ApiError } from '@/utils/api_error';
+import slugify from 'slugify';
 
 @Injectable()
 export class EventService {
   constructor(private prisma: PrismaService) {}
+
   async create(payload: CreateEventDto) {
+    const slug = slugify(payload.title, { lower: true, strict: true });
+
+    const isExists: Event | null = await this.prisma.event.findFirst({
+      where: { slug },
+    });
+
+    if (isExists) {
+      throw new ApiError(HttpStatus.CONFLICT, 'Same Name Conflict');
+    }
+
     return await this.prisma.event.create({ data: payload });
   }
 
@@ -65,6 +77,12 @@ export class EventService {
   }
 
   async update(id: string, data: Prisma.EventUpdateInput) {
+    let slug = '';
+
+    if (data?.title) {
+      slug = slugify(data?.title as string, { lower: true, strict: true });
+    }
+
     const isAnswerExist = await this.prisma.event.findUnique({
       where: { id },
     });
@@ -75,7 +93,7 @@ export class EventService {
 
     return this.prisma.event.update({
       where: { id },
-      data: { ...data },
+      data: { ...data, ...(slug ? { slug } : {}) },
     });
   }
 
