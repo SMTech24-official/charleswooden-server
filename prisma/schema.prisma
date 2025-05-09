@@ -61,17 +61,79 @@ model Admin {
 }
 
 model Customer {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @unique @db.ObjectId
-  firstName String?
-  lastName  String?
-  location  String?
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  answers   Answer[]
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String         @unique @db.ObjectId
+  firstName        String?
+  lastName         String?
+  location         String?
+  user             User           @relation(fields: [userId], references: [id])
+  answers          Answer[]
+  subscriptions    Subscription[]
+  stripeCustomerId String?        @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  Payment          Payment[]
 
   @@map("customers")
+}
+
+model SubscriptionPlan {
+  id                   String                 @id @default(auto()) @map("_id") @db.ObjectId
+  plan                 SubscribePlan          @default(MONTH) // Monthly or Yearly
+  status               SubscriptionPlanStatus @default(ACTIVE)
+  planName             PlanName               @default(FREE)
+  description          String
+  postLimit            Int // Monthly Post Slots
+  engagementsPerPost   Int                    @default(20) // Comments & likes per post
+  scheduleFlexibility  String // Choose time slots
+  postAnalyzer         Boolean?               @default(false) // Is Post Formatter included?
+  postGenerator        Boolean?               @default(false) // Is Post Generator included?
+  analytics            String? // Analytics information (e.g., "coming soon")
+  support              String? // Support type (e.g., "Email Support")
+  trialPeriod          Boolean                @default(true) // Is 14-day free trial included?
+  price                Float                  @default(0) // Subscription price
+  stripePriceId        String                 @default("") // Stripe price reference
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  enrolledSubscription Subscription[]
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id                   String             @id @default(auto()) @map("_id") @db.ObjectId
+  customerId           String             @db.ObjectId // Reference to User
+  subscriptionPlanId   String             @db.ObjectId // Reference to Subscription
+  subscriptionStatus   SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId String
+  stripeCustomerId     String
+  expiresAt            DateTime
+  createdAt            DateTime           @default(now())
+  cancelRequest        Boolean            @default(false)
+  // Relationships
+  customer             Customer           @relation(fields: [customerId], references: [id]) // Foreign Key relation to User
+  subscription         SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id]) // Foreign Key relation to Subscription
+  payments             Payment[]
+
+  @@unique([customerId, subscriptionPlanId])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
+  customerId         String        @db.ObjectId // Reference to User
+  amount             Float
+  currency           String
+  paymentDate        DateTime
+  paymentStatus      PaymentStatus
+  subscriptionId     String        @db.ObjectId
+  subscriptionPlanId String        @db.ObjectId
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  customer           Customer      @relation(fields: [customerId], references: [id])
+  subscription       Subscription  @relation(fields: [subscriptionId], references: [id])
+
+  @@map("payments")
 }
 
 model Category {
@@ -264,4 +326,66 @@ enum Currency {
   AUD
   CAD
   JPY
+}
+
+enum NotificationRole {
+  MEMBER
+  ADMIN
+}
+
+enum PlanName {
+  FREE
+  EDGE
+  VISIONARY
+  QUANTUM
+}
+
+enum MemberSubscriptionStatus {
+  NONE
+  ACTIVE
+  EXPIRED
+  PENDING
+}
+
+enum SubscriptionPlanStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAST_DUE
+}
+
+enum PaymentMethod {
+  STRIPE
+  PAYPAL
+}
+
+enum SubscribePlan {
+  MONTH
+  YEAR
+}
+
+enum EngagementTime {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum NotificationType {
+  SUBSCRIPTION_REMINDER
+  GROUP_ASSIGNMENT
+  MEMBER_REGISTERED
+  POST_ENGAGEMENT
+  TRAINING_REQUESTED
+  NEED_HELP_REQUESTED
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
 }
