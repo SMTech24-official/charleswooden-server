@@ -14,21 +14,24 @@ import { AnswerService } from './answer.service';
 import { CreateAnswerDto } from './dto/create-answer.dto';
 import { UpdateAnswerDto } from './dto/update-answer.dto';
 import { Roles } from '../roles/roles.decorator';
-import { Role } from '@/enum/role.enum';
 import { ResponseService } from '@/utils/response';
 import { Request } from 'express';
+import { Role } from '@/enum/role.enum';
 
-@Controller('answer')
+@Controller('answers')
 export class AnswerController {
   constructor(private readonly answerService: AnswerService) {}
 
   @Post()
   @Roles(Role.CUSTOMER)
-  async create(@Body() createAnswerDto: CreateAnswerDto[]) {
-    const result = await this.answerService.create(createAnswerDto);
+  async create(
+    @Body() createAnswerDto: CreateAnswerDto[],
+    @Req() req: Request,
+  ) {
+    const result = await this.answerService.create(createAnswerDto, req?.user);
     return ResponseService.formatResponse({
       statusCode: HttpStatus.CREATED,
-      message: 'Ans submitted successfully',
+      message: 'Answers submitted successfully',
       data: result,
     });
   }

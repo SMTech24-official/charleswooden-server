@@ -31,7 +31,6 @@ model User {
   chatsReceived    Chat[]         @relation("ReceiverRelation")
   createdRooms     Room[]         @relation("CreatorRelation")
   notifications    Notification[]
-  Answer           Answer[]
 
   @@unique([username, email, contactNo])
   @@map("users")
@@ -103,11 +102,10 @@ model Answer {
   answer     Int
   questionId String   @db.ObjectId
   question   Question @relation(fields: [questionId], references: [id])
-  userId     String   @db.ObjectId
-  customer   Customer @relation(fields: [userId], references: [id])
+  customerId String   @db.ObjectId
+  customer   Customer @relation(fields: [customerId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  User       User     @relation(fields: [userId], references: [id])
 
   @@map("answers")
 }

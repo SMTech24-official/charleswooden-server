@@ -11,9 +11,20 @@ import { ApiError } from '@/utils/api_error';
 @Injectable()
 export class AnswerService {
   constructor(private prisma: PrismaService) {}
-  async create(createAnswerDto: CreateAnswerDto[]) {
-    await this.prisma.answer.createMany({ data: createAnswerDto });
-    return 'answer submited successfully';
+  async create(createAnswerDto: CreateAnswerDto[], user: any) {
+    const isCustomerExists = await this.prisma.customer.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!isCustomerExists) {
+      throw new ApiError(HttpStatus.NOT_FOUND, 'Customer Not Found');
+    }
+
+    const allData = createAnswerDto?.map((item) => {
+      return { ...item, customerId: isCustomerExists.id };
+    });
+
+    return await this.prisma.answer.createMany({ data: allData });
   }
 
   async findAll(req: Request): Promise<IGenericResponse<Answer[]>> {

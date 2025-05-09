@@ -50,7 +50,7 @@ import { EventModule } from '@/modules/event/event.module';
     CategoryModule,
     QuestionModule,
     AnswerModule,
-    EventModule
+    EventModule,
   ],
   controllers: [AppController],
   providers: [
