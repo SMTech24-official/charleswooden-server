@@ -1,24 +1,23 @@
 import { PrismaService } from '@/helper/prisma.service';
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Inject } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { Role } from '@/enum/role.enum';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import Stripe from 'stripe';
-import { ConfigService } from '@nestjs/config';
 import { UserStatus } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class SubscriptionService {
+  private stripe: Stripe;
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-    private stripe: Stripe = new Stripe(
-      this.configService.get<string>('STRIPE_SK') as string,
-      {
-        apiVersion: '2025-04-30.basil',
-      },
-    ),
-  ) {}
+  ) {
+    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SK'), {
+      apiVersion: '2025-04-30.basil',
+    });
+  }
 
   async createSubscription(dto: CreateSubscriptionDto, user: any) {
     const { paymentMethodId, subscriptionPlanId, name, email } = dto;
@@ -122,7 +121,6 @@ export class SubscriptionService {
 
   async getSubscriptions(userData: any) {
     if (userData.role === Role.CUSTOMER) {
-
       const customer = await this.prisma.customer.findUnique({
         where: { userId: userData.id },
       });

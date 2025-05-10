@@ -11,11 +11,11 @@ import {
   Req,
   Patch,
 } from '@nestjs/common';
-import { SubscriptionService } from './subscription.service';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
+import { SubscriptionService } from './subscription.service';
 
 @Controller('subscriptions')
 @UseInterceptors(ClassSerializerInterceptor)

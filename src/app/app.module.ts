@@ -19,6 +19,7 @@ import { QuestionModule } from '@/modules/question/question.module';
 import { AnswerModule } from '@/modules/answer/answer.module';
 import { EventModule } from '@/modules/event/event.module';
 import { SubscriptionPlanModule } from '@/modules/subscription-plan/subscription-plan.module';
+import { SubscriptionModule } from '@/modules/subscription/subscription.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { SubscriptionPlanModule } from '@/modules/subscription-plan/subscription
     AnswerModule,
     EventModule,
     SubscriptionPlanModule,
+    SubscriptionModule,
   ],
   controllers: [AppController],
   providers: [
