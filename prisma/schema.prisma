@@ -83,13 +83,6 @@ model SubscriptionPlan {
   status               SubscriptionPlanStatus @default(ACTIVE)
   planName             PlanName               @default(FREE)
   description          String
-  postLimit            Int // Monthly Post Slots
-  engagementsPerPost   Int                    @default(20) // Comments & likes per post
-  scheduleFlexibility  String // Choose time slots
-  postAnalyzer         Boolean?               @default(false) // Is Post Formatter included?
-  postGenerator        Boolean?               @default(false) // Is Post Generator included?
-  analytics            String? // Analytics information (e.g., "coming soon")
-  support              String? // Support type (e.g., "Email Support")
   trialPeriod          Boolean                @default(true) // Is 14-day free trial included?
   price                Float                  @default(0) // Subscription price
   stripePriceId        String                 @default("") // Stripe price reference

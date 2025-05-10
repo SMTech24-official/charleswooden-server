@@ -18,6 +18,7 @@ import { CategoryModule } from '@/modules/category/category.module';
 import { QuestionModule } from '@/modules/question/question.module';
 import { AnswerModule } from '@/modules/answer/answer.module';
 import { EventModule } from '@/modules/event/event.module';
+import { SubscriptionPlanModule } from '@/modules/subscription-plan/subscription-plan.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { EventModule } from '@/modules/event/event.module';
     QuestionModule,
     AnswerModule,
     EventModule,
+    SubscriptionPlanModule,
   ],
   controllers: [AppController],
   providers: [
