@@ -61,18 +61,19 @@ model Admin {
 }
 
 model Customer {
-  id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String         @unique @db.ObjectId
-  firstName        String?
-  lastName         String?
-  location         String?
-  user             User           @relation(fields: [userId], references: [id])
-  answers          Answer[]
-  subscriptions    Subscription[]
-  stripeCustomerId String?        @unique
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  Payment          Payment[]
+  id                 String             @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String             @unique @db.ObjectId
+  firstName          String?
+  lastName           String?
+  location           String?
+  user               User               @relation(fields: [userId], references: [id])
+  answers            Answer[]
+  subscriptions      Subscription[]
+  stripeCustomerId   String?            @unique
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  Payment            Payment[]
+  subscriptionStatus SubscriptionStatus @default(ACTIVE)
 
   @@map("customers")
 }
@@ -105,7 +106,7 @@ model Subscription {
   cancelRequest        Boolean            @default(false)
   // Relationships
   customer             Customer           @relation(fields: [customerId], references: [id]) // Foreign Key relation to User
-  subscription         SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id]) // Foreign Key relation to Subscription
+  subscriptionPlan     SubscriptionPlan   @relation(fields: [subscriptionPlanId], references: [id]) // Foreign Key relation to Subscription
   payments             Payment[]
 
   @@unique([customerId, subscriptionPlanId])
@@ -288,6 +289,7 @@ enum PayoutStatus {
 enum UserStatus {
   ACTIVE
   INACTIVE
+  SUSPENDED
   BLOCKED
   AVAILABLE
   UNAVAILABLE
