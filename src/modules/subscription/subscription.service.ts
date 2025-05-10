@@ -1,5 +1,3 @@
-// src/modules/subscription/services/subscription.service.ts
-
 import { PrismaService } from '@/helper/prisma.service';
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
@@ -7,6 +5,7 @@ import { Role } from '@/enum/role.enum';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import Stripe from 'stripe';
 import { ConfigService } from '@nestjs/config';
+import { UserStatus } from '@prisma/client';
 
 @Injectable()
 export class SubscriptionService {
@@ -14,7 +13,7 @@ export class SubscriptionService {
     private prisma: PrismaService,
     private configService: ConfigService,
     private stripe: Stripe = new Stripe(
-      configService.get<string>('STRIPE_SECRET_KEY') as string,
+      this.configService.get<string>('STRIPE_SK') as string,
       {
         apiVersion: '2025-04-30.basil',
       },
@@ -39,7 +38,12 @@ export class SubscriptionService {
       where: { email: user.email, role: Role.CUSTOMER },
     });
 
-    if (!verifiedUser || verifiedUser.userStatus === 'SUSPENDED') {
+    if (
+      !verifiedUser ||
+      verifiedUser.userStatus === UserStatus.SUSPENDED ||
+      verifiedUser.userStatus === UserStatus.BLOCKED ||
+      verifiedUser.userStatus === UserStatus.INACTIVE
+    ) {
       throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
 
@@ -118,12 +122,9 @@ export class SubscriptionService {
 
   async getSubscriptions(userData: any) {
     if (userData.role === Role.CUSTOMER) {
-      const user = await this.prisma.user.findUnique({
-        where: { email: userData.email },
-      });
 
       const customer = await this.prisma.customer.findUnique({
-        where: { userId: user.id },
+        where: { userId: userData.id },
       });
 
       return this.prisma.subscription.findMany({

@@ -9,14 +9,13 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
-import { ParseDataPipe } from '@/pipes/parse_data';
 import { ResponseService } from '@/utils/response';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
 import { Public } from '../auth/auth.decorator';
 import { SubscriptionPlanService } from './subscription-plan.service';
-import { CreateSubscriptionDto } from '../subscription/dto/create-subscription.dto';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
+import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
 
 @Controller('subscription-plans')
 export class SubscriptionPlanController {
@@ -64,7 +63,7 @@ export class SubscriptionPlanController {
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async update(
     @Param('id') id: string,
-    @Body(new ParseDataPipe()) updateSubscriptionPlanDto?: string,
+    @Body() updateSubscriptionPlanDto?: UpdateSubscriptionPlanDto,
   ) {
     const data = JSON.parse(JSON.stringify(updateSubscriptionPlanDto));
     const result = await this.SubscriptionPlanService.update(id, {
