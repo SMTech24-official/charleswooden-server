@@ -92,7 +92,7 @@ export class SubscriptionService {
       stripeCustomerId = stripeCustomer.id;
     }
 
-    const stripeSubscription = await this.stripe.subscriptions.create({
+    console.log(`see some random`, {
       customer: stripeCustomerId,
       items: [{ price: subscriptionPlan.stripePriceId }],
       ...(subscriptionPlan.trialPeriod && {
@@ -103,6 +103,19 @@ export class SubscriptionService {
         subscriptionPlanId: subscriptionPlan.id,
       },
       expand: ['latest_invoice.payment_intent'],
+    });
+
+    const stripeSubscription = await this.stripe.subscriptions.create({
+      customer: stripeCustomerId,
+      items: [{ price: subscriptionPlan.stripePriceId }],
+      ...(subscriptionPlan.trialPeriod && {
+        trial_period_days: 7,
+      }),
+      metadata: {
+        customerId: customer.id,
+        subscriptionPlanId: subscriptionPlan.id,
+      },
+      // expand: ['latest_invoice.payment_intent'],
     });
 
     await this.prisma.customer.update({
