@@ -7,6 +7,7 @@ import {
   Body,
   Query,
   Request,
+  Patch,
 } from '@nestjs/common';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
@@ -27,8 +28,8 @@ export class SubscriptionPlanController {
   }
 
   @Get()
-  async findAllActive() {
-    return this.subscriptionPlanService.getSubscriptionPlans();
+  async findAllActive(@Query() query: Record<string, any>) {
+    return this.subscriptionPlanService.getSubscriptionPlans(query);
   }
 
   @Get('admin')
@@ -43,7 +44,7 @@ export class SubscriptionPlanController {
     return this.subscriptionPlanService.getSubscriptionPlanById(id);
   }
 
-  @Put(':id')
+  @Patch(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async update(
     @Param('id') id: string,

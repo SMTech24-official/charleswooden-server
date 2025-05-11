@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
-import { SubscribePlan, Subscription } from '@prisma/client';
+import { SubscribePlan, Subscription, SubscriptionPlan } from '@prisma/client';
 import Stripe from 'stripe';
 import { PrismaService } from '@/helper/prisma.service';
 import { ConfigService } from '@nestjs/config';
@@ -91,18 +91,32 @@ export class SubscriptionPlanService {
     }
   }
 
-  async getSubscriptionPlans() {
-    const plans = await this.prisma.subscriptionPlan.findMany({
-      where: { status: 'ACTIVE' },
-    });
+  async getSubscriptionPlans(
+    query: Record<string, any>,
+  ): Promise<IGenericResponse<SubscriptionPlan[]>> {
+    const populateFields = query.populate
+      ? query.populate
+          .split(',')
+          .reduce((acc: Record<string, boolean>, field) => {
+            acc[field] = true;
+            return acc;
+          }, {})
+      : {};
 
-    if (plans.length === 0) return [];
+    const queryBuilder = new QueryBuilder(this.prisma.subscriptionPlan, query);
+    const result = await queryBuilder
+      .range()
+      .search([])
+      .filter([], [])
+      .sort()
+      .paginate()
+      .fields()
+      .populate(populateFields)
+      .execute();
 
-    const customOrder = ['FREE', 'BASIC', 'PREMIUM', 'PRO'];
-    return plans.sort(
-      (a, b) =>
-        customOrder.indexOf(a.planName) - customOrder.indexOf(b.planName),
-    );
+    const meta = await queryBuilder.countTotal();
+
+    return { meta, data: result };
   }
 
   async getSubscriptionPlanCustomers(
