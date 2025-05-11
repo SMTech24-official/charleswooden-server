@@ -36,6 +36,9 @@ export class CreateSubscriptionPlanDto {
   @IsOptional()
   price?: number;
 
+  @IsNumber()
+  postLimit: number;
+
   @ValidateIf((dto) => dto.price !== undefined && dto.price > 0)
   @IsString()
   stripePriceId?: string;

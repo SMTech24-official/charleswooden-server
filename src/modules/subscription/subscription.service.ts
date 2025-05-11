@@ -20,6 +20,7 @@ export class SubscriptionService {
   }
 
   async createSubscription(dto: CreateSubscriptionDto, user: any) {
+    console.log(`Creating subscription for user: `, dto);
     const { paymentMethodId, subscriptionPlanId, name, email } = dto;
 
     const subscriptionPlan = await this.prisma.subscriptionPlan.findUnique({
@@ -43,7 +44,7 @@ export class SubscriptionService {
       verifiedUser.userStatus === UserStatus.BLOCKED ||
       verifiedUser.userStatus === UserStatus.INACTIVE
     ) {
-      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+      throw new HttpException('Account Is Not Active', HttpStatus.FORBIDDEN);
     }
 
     const customer = await this.prisma.customer.findUnique({
@@ -91,32 +92,25 @@ export class SubscriptionService {
       stripeCustomerId = stripeCustomer.id;
     }
 
-    try {
-      const stripeSubscription = await this.stripe.subscriptions.create({
-        customer: stripeCustomerId,
-        items: [{ price: subscriptionPlan.stripePriceId }],
-        ...(subscriptionPlan.trialPeriod && {
-          trial_period_days: 7,
-        }),
-        metadata: {
-          customerId: customer.id,
-          subscriptionPlanId: subscriptionPlan.id,
-        },
-        expand: ['latest_invoice.payment_intent'],
-      });
+    const stripeSubscription = await this.stripe.subscriptions.create({
+      customer: stripeCustomerId,
+      items: [{ price: subscriptionPlan.stripePriceId }],
+      ...(subscriptionPlan.trialPeriod && {
+        trial_period_days: 7,
+      }),
+      metadata: {
+        customerId: customer.id,
+        subscriptionPlanId: subscriptionPlan.id,
+      },
+      expand: ['latest_invoice.payment_intent'],
+    });
 
-      await this.prisma.customer.update({
-        where: { id: customer.id },
-        data: { subscriptionStatus: 'PENDING' },
-      });
+    await this.prisma.customer.update({
+      where: { id: customer.id },
+      data: { subscriptionStatus: 'PENDING' },
+    });
 
-      return stripeSubscription;
-    } catch (error) {
-      throw new HttpException(
-        'Failed to create subscription',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return stripeSubscription;
   }
 
   async getSubscriptions(userData: any) {

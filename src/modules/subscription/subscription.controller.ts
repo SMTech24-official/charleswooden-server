@@ -23,23 +23,16 @@ export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}
 
   @Post()
-  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN, Role.CUSTOMER)
   async create(@Body() dto: CreateSubscriptionDto, @Req() req: any) {
-    try {
-      const subscription = await this.subscriptionService.createSubscription(
-        dto,
-        req?.user,
-      );
-      return {
-        statusCode: HttpStatus.CREATED,
-        data: subscription,
-      };
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Failed to create subscription',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    const subscription = await this.subscriptionService.createSubscription(
+      dto,
+      req?.user,
+    );
+    return {
+      statusCode: HttpStatus.CREATED,
+      data: subscription,
+    };
   }
 
   @Get()

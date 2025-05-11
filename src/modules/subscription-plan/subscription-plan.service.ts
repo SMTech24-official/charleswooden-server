@@ -1,23 +1,118 @@
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
+import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
+import { SubscribePlan, Subscription } from '@prisma/client';
+import Stripe from 'stripe';
 import { PrismaService } from '@/helper/prisma.service';
+import { ConfigService } from '@nestjs/config';
 import { IGenericResponse } from '@/interface/common';
-import { ApiError } from '@/utils/api_error';
 import QueryBuilder from '@/utils/query_builder';
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { SubscriptionPlan, Prisma } from '@prisma/client';
 
 @Injectable()
 export class SubscriptionPlanService {
-  constructor(private prisma: PrismaService) {}
-
-  async create(data: Prisma.SubscriptionPlanCreateInput) {
-    return this.prisma.subscriptionPlan.create({
-      data: { ...data },
+  private stripe: Stripe;
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SK'), {
+      apiVersion: '2025-04-30.basil',
     });
   }
 
-  async findAll(
+  async createSubscriptionPlan(user: any, dto: CreateSubscriptionPlanDto) {
+    // Check if user is admin
+    const admin = await this.prisma.user.findUnique({
+      where: { id: user.id, role: user.role },
+    });
+
+    if (!admin) {
+      throw new HttpException(
+        'Only admin or super admin can create subscription plans',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // Check for existing plan name
+    const existingPlan = await this.prisma.subscriptionPlan.findFirst({
+      where: { planName: dto.planName },
+    });
+
+    if (existingPlan) {
+      throw new HttpException(
+        'A subscription plan with the same name already exists',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    let stripePriceId: string;
+
+    try {
+      if (dto.planName === 'FREE') {
+        return await this.prisma.subscriptionPlan.create({
+          data: {
+            planName: 'FREE',
+            ...dto,
+            price: 0,
+            // plan: dto.plan.toUpperCase(),
+          },
+        });
+      } else {
+        const stripePrice = await this.stripe.prices.create({
+          unit_amount: Math.round(dto.price * 100),
+          currency: 'usd',
+          recurring: {
+            interval: dto.plan.toLowerCase() as Stripe.Price.Recurring.Interval,
+          },
+          product_data: {
+            name: dto.planName,
+            metadata: {
+              description: dto.description,
+              postLimit: dto.postLimit.toString(),
+            },
+          },
+        });
+
+        stripePriceId = stripePrice.id;
+
+        return await this.prisma.subscriptionPlan.create({
+          data: {
+            ...dto,
+            stripePriceId,
+            plan: dto.plan as SubscribePlan,
+          },
+        });
+      }
+    } catch (error) {
+      // Clean up Stripe price if creation fails
+      if (stripePriceId) {
+        await this.stripe.prices.update(stripePriceId, { active: false });
+      }
+
+      throw new HttpException(
+        'Failed to create subscription plan',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getSubscriptionPlans() {
+    const plans = await this.prisma.subscriptionPlan.findMany({
+      where: { status: 'ACTIVE' },
+    });
+
+    if (plans.length === 0) return [];
+
+    const customOrder = ['FREE', 'BASIC', 'PREMIUM', 'PRO'];
+    return plans.sort(
+      (a, b) =>
+        customOrder.indexOf(a.planName) - customOrder.indexOf(b.planName),
+    );
+  }
+
+  async getSubscriptionPlanCustomers(
     query: Record<string, any>,
-  ): Promise<IGenericResponse<SubscriptionPlan[]>> {
+  ): Promise<IGenericResponse<Subscription[]>> {
     const populateFields = query.populate
       ? query.populate
           .split(',')
@@ -27,7 +122,7 @@ export class SubscriptionPlanService {
           }, {})
       : {};
 
-    const queryBuilder = new QueryBuilder(this.prisma.subscriptionPlan, query);
+    const queryBuilder = new QueryBuilder(this.prisma.subscription, query);
     const result = await queryBuilder
       .range()
       .search([])
@@ -43,48 +138,125 @@ export class SubscriptionPlanService {
     return { meta, data: result };
   }
 
-  async findOne(id: string) {
-    const isSubscriptionPlanExists = await this.prisma.subscriptionPlan
-      .findUnique({
-        where: { id },
-      })
-      .catch(() => null);
+  async getSubscriptionPlanById(planId: string) {
+    const plan = await this.prisma.subscriptionPlan.findUnique({
+      where: { id: planId },
+    });
 
-    if (!isSubscriptionPlanExists) {
-      throw new ApiError(HttpStatus.NOT_FOUND, 'SubscriptionPlan Not Found');
+    if (!plan) {
+      throw new HttpException(
+        'Subscription plan not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    return isSubscriptionPlanExists;
+    return plan;
   }
 
-  async update(id: string, data: Prisma.SubscriptionPlanUpdateInput) {
-    const isSubscriptionPlanExists =
-      await this.prisma.subscriptionPlan.findUnique({
-        where: { id },
-      });
+  async getAdminSubscriptionPlans() {
+    const plans = await this.prisma.subscriptionPlan.findMany();
 
-    if (!isSubscriptionPlanExists) {
-      throw new ApiError(HttpStatus.NOT_FOUND, 'SubscriptionPlan Not Found');
+    if (!plans) {
+      throw new HttpException(
+        'No subscription plans found',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    return this.prisma.subscriptionPlan.update({
-      where: { id },
-      data: { ...data },
-    });
+    const customOrder = ['FREE', 'BASIC', 'PREMIUM', 'PRO'];
+    return plans.sort(
+      (a, b) =>
+        customOrder.indexOf(a.planName) - customOrder.indexOf(b.planName),
+    );
   }
 
-  async remove(id: string) {
-    const isSubscriptionPlanExists =
-      await this.prisma.subscriptionPlan.findUnique({
-        where: { id },
-      });
+  async updateSubscriptionPlan(planId: string, dto: UpdateSubscriptionPlanDto) {
+    const currentPlan = await this.prisma.subscriptionPlan.findUnique({
+      where: { id: planId },
+    });
 
-    if (!isSubscriptionPlanExists) {
-      throw new ApiError(HttpStatus.NOT_FOUND, 'SubscriptionPlan Not Found');
+    if (!currentPlan) {
+      throw new HttpException(
+        'Subscription plan not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
 
-    return await this.prisma.subscriptionPlan.delete({
-      where: { id },
-    });
+    // Check if plan name already exists
+    if (dto.planName && dto.planName !== currentPlan.planName) {
+      const existingPlan = await this.prisma.subscriptionPlan.findFirst({
+        where: { planName: dto.planName },
+      });
+
+      if (existingPlan) {
+        throw new HttpException(
+          `A subscription plan with name ${dto.planName} already exists`,
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    // Handle FREE plan special case
+    if (currentPlan.planName === 'FREE') {
+      return await this.prisma.subscriptionPlan.update({
+        where: { id: planId },
+        data: {
+          ...dto,
+          price: 0,
+        },
+      });
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        let stripePriceId = currentPlan.stripePriceId;
+
+        // If price or plan type changed, update Stripe price
+        if (dto.price || dto.plan) {
+          // Archive old price
+          if (currentPlan.stripePriceId) {
+            await this.stripe.prices.update(currentPlan.stripePriceId, {
+              active: false,
+            });
+          }
+
+          // Create new price
+          const newPrice = await this.stripe.prices.create({
+            unit_amount: dto.price
+              ? Math.round(dto.price * 100)
+              : Math.round(currentPlan.price * 100),
+            currency: 'usd',
+            recurring: {
+              interval: (dto.plan?.toLowerCase() ||
+                currentPlan.plan.toLowerCase()) as Stripe.Price.Recurring.Interval,
+            },
+            product_data: {
+              name: dto.planName || currentPlan.planName,
+              metadata: {
+                description: dto.description || currentPlan.description,
+                postLimit: dto.postLimit ? dto.postLimit.toString() : '0', // Default or appropriate fallback value
+              },
+            },
+          });
+
+          stripePriceId = newPrice.id;
+        }
+
+        // Update subscription plan
+        return await tx.subscriptionPlan.update({
+          where: { id: planId },
+          data: {
+            ...dto,
+            plan: dto.plan,
+            stripePriceId,
+          },
+        });
+      });
+    } catch (error) {
+      throw new HttpException(
+        'Failed to update subscription plan',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
   }
 }

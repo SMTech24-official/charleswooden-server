@@ -2,89 +2,59 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
+  Put,
   Param,
-  Delete,
-  HttpStatus,
+  Body,
   Query,
+  Request,
 } from '@nestjs/common';
-import { ResponseService } from '@/utils/response';
-import { Roles } from '../roles/roles.decorator';
-import { Role } from '@/enum/role.enum';
-import { Public } from '../auth/auth.decorator';
-import { SubscriptionPlanService } from './subscription-plan.service';
 import { CreateSubscriptionPlanDto } from './dto/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from './dto/update-subscription-plan.dto';
+import { SubscriptionPlanService } from './subscription-plan.service';
+import { Role } from '@/enum/role.enum';
+import { Roles } from '../roles/roles.decorator';
 
 @Controller('subscription-plans')
 export class SubscriptionPlanController {
   constructor(
-    private readonly SubscriptionPlanService: SubscriptionPlanService,
+    private readonly subscriptionPlanService: SubscriptionPlanService,
   ) {}
 
   @Post()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  async create(@Body() createSubscriptionPlanDto: CreateSubscriptionPlanDto) {
-    const data = JSON.parse(JSON.stringify(createSubscriptionPlanDto));
-    const result = await this.SubscriptionPlanService.create({ ...data });
-
-    return ResponseService.formatResponse({
-      statusCode: HttpStatus.OK,
-      message: `SubscriptionPlan created successfully`,
-      data: result,
-    });
+  async create(@Body() dto: CreateSubscriptionPlanDto, @Request() req: any) {
+    return this.subscriptionPlanService.createSubscriptionPlan(req.user, dto);
   }
 
-  @Public()
   @Get()
-  async findAll(@Query() query: Record<string, any>) {
-    const result = await this.SubscriptionPlanService.findAll(query);
-    return ResponseService.formatResponse({
-      statusCode: HttpStatus.OK,
-      message: `all SubscriptionPlans found successfully`,
-      meta: result.meta,
-      data: result.data,
-    });
+  async findAllActive() {
+    return this.subscriptionPlanService.getSubscriptionPlans();
+  }
+
+  @Get('admin')
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  async findAllForAdmin() {
+    return this.subscriptionPlanService.getAdminSubscriptionPlans();
   }
 
   @Get(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async findOne(@Param('id') id: string) {
-    const result = await this.SubscriptionPlanService.findOne(id);
-    return ResponseService.formatResponse({
-      statusCode: HttpStatus.OK,
-      message: `single SubscriptionPlan found successfully`,
-      data: result,
-    });
+    return this.subscriptionPlanService.getSubscriptionPlanById(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async update(
     @Param('id') id: string,
-    @Body() updateSubscriptionPlanDto?: UpdateSubscriptionPlanDto,
+    @Body() dto: UpdateSubscriptionPlanDto,
   ) {
-    const data = JSON.parse(JSON.stringify(updateSubscriptionPlanDto));
-    const result = await this.SubscriptionPlanService.update(id, {
-      ...data,
-    });
-
-    return ResponseService.formatResponse({
-      statusCode: HttpStatus.OK,
-      message: `SubscriptionPlan updated successfully`,
-      data: result,
-    });
+    return this.subscriptionPlanService.updateSubscriptionPlan(id, dto);
   }
 
-  @Delete(':id')
+  @Get('customers')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  async remove(@Param('id') id: string) {
-    const result = await this.SubscriptionPlanService.remove(id);
-    return ResponseService.formatResponse({
-      statusCode: HttpStatus.OK,
-      message: `SubscriptionPlan deleted successfully`,
-      data: result,
-    });
+  async getCustomers(@Query() query: Record<string, any>) {
+    return this.subscriptionPlanService.getSubscriptionPlanCustomers(query);
   }
 }
