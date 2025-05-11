@@ -47,52 +47,47 @@ export class SubscriptionPlanService {
 
     let stripePriceId: string;
 
-    try {
-      if (dto.planName === 'FREE') {
-        return await this.prisma.subscriptionPlan.create({
-          data: {
-            planName: 'FREE',
-            ...dto,
-            price: 0,
-            // plan: dto.plan.toUpperCase(),
+    if (dto.planName === 'FREE') {
+      return await this.prisma.subscriptionPlan.create({
+        data: {
+          planName: 'FREE',
+          ...dto,
+          price: 0,
+          // plan: dto.plan.toUpperCase(),
+        },
+      });
+    } else {
+      const stripePrice = await this.stripe.prices.create({
+        unit_amount: Math.round(dto.price * 100),
+        currency: 'usd',
+        recurring: {
+          interval: dto.plan.toLowerCase() as Stripe.Price.Recurring.Interval,
+        },
+        product_data: {
+          name: dto.planName,
+          metadata: {
+            description: dto.description,
           },
-        });
-      } else {
-        const stripePrice = await this.stripe.prices.create({
-          unit_amount: Math.round(dto.price * 100),
-          currency: 'usd',
-          recurring: {
-            interval: dto.plan.toLowerCase() as Stripe.Price.Recurring.Interval,
-          },
-          product_data: {
-            name: dto.planName,
-            metadata: {
-              description: dto.description,
-              postLimit: dto.postLimit.toString(),
-            },
-          },
-        });
+        },
+      });
 
-        stripePriceId = stripePrice.id;
+      stripePriceId = stripePrice.id;
 
-        return await this.prisma.subscriptionPlan.create({
-          data: {
-            ...dto,
-            stripePriceId,
-            plan: dto.plan as SubscribePlan,
-          },
-        });
-      }
-    } catch (error) {
-      // Clean up Stripe price if creation fails
-      if (stripePriceId) {
-        await this.stripe.prices.update(stripePriceId, { active: false });
-      }
+      console.log(`see stripePriceId`, stripePrice);
 
-      throw new HttpException(
-        'Failed to create subscription plan',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      console.log(`see data`, {
+        ...dto,
+        stripePriceId,
+        plan: dto.plan as SubscribePlan,
+      });
+
+      return await this.prisma.subscriptionPlan.create({
+        data: {
+          ...dto,
+          stripePriceId,
+          plan: dto.plan as SubscribePlan,
+        },
+      });
     }
   }
 
@@ -234,7 +229,6 @@ export class SubscriptionPlanService {
               name: dto.planName || currentPlan.planName,
               metadata: {
                 description: dto.description || currentPlan.description,
-                postLimit: dto.postLimit ? dto.postLimit.toString() : '0', // Default or appropriate fallback value
               },
             },
           });
