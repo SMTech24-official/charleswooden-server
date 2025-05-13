@@ -10,12 +10,16 @@ import {
   ClassSerializerInterceptor,
   Req,
   Patch,
+  RawBodyRequest,
 } from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
 import { SubscriptionService } from './subscription.service';
+import { Request } from 'express';
+import { Public } from '../auth/auth.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller('subscriptions')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -97,11 +101,11 @@ export class SubscriptionController {
     }
   }
 
-  // 🧾 Get subscription by ID
-  @Post('webhook')
-  async handleWebhook(@Body() event: any) {
+  @Public()
+  @Post('stripe/webhook')
+  async handleWebhook(@Req() req: RawBodyRequest<Request>) {
     try {
-      const response = await this.subscriptionService.handleWebhook(event);
+      const response = await this.subscriptionService.handleWebhook(req);
       return response;
     } catch (error) {
       throw new HttpException(

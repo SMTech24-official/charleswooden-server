@@ -12,6 +12,7 @@ async function bootstrap() {
       timestamp: true,
       json: true,
     }),
+    rawBody: true,
   });
 
   app.enableCors();

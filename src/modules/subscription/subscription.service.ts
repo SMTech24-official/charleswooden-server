@@ -1,11 +1,20 @@
 import { PrismaService } from '@/helper/prisma.service';
-import { Injectable, HttpException, HttpStatus, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  Inject,
+  RawBodyRequest,
+} from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { Role } from '@/enum/role.enum';
 import { UpdateSubscriptionDto } from './dto/update-subscription.dto';
 import Stripe from 'stripe';
 import { UserStatus } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
+import { ApiError } from '@/utils/api_error';
+import { SubscriptionUtil } from './subscription.utils';
+import { Request } from 'express';
 
 @Injectable()
 export class SubscriptionService {
@@ -13,6 +22,7 @@ export class SubscriptionService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private subsriptionUtil: SubscriptionUtil,
   ) {
     this.stripe = new Stripe(this.configService.get<string>('STRIPE_SK'), {
       apiVersion: '2025-04-30.basil',
@@ -91,19 +101,6 @@ export class SubscriptionService {
 
       stripeCustomerId = stripeCustomer.id;
     }
-
-    console.log(`see some random`, {
-      customer: stripeCustomerId,
-      items: [{ price: subscriptionPlan.stripePriceId }],
-      ...(subscriptionPlan.trialPeriod && {
-        trial_period_days: 7,
-      }),
-      metadata: {
-        customerId: customer.id,
-        subscriptionPlanId: subscriptionPlan.id,
-      },
-      expand: ['latest_invoice.payment_intent'],
-    });
 
     const stripeSubscription = await this.stripe.subscriptions.create({
       customer: stripeCustomerId,
@@ -258,34 +255,79 @@ export class SubscriptionService {
     });
   }
 
-  async handleWebhook(event: any) {
-    const { type, data } = event;
-
-    switch (type) {
+  async handleWebhook(req: RawBodyRequest<Request>) {
+    const sig = req?.headers['stripe-signature'];
+    console.log(`see sig`, sig);
+    let event;
+    try {
+      event = this.stripe.webhooks.constructEvent(
+        req?.rawBody,
+        sig,
+        this.configService.get('STRIPE_WEBHOOK_SK'),
+      );
+    } catch (error) {
+      throw new ApiError(HttpStatus.BAD_REQUEST, `server  error`);
+    }
+    console.log(`see event`, event?.type);
+    switch (event.type) {
       case 'invoice.payment_succeeded':
-        console.log('🤑 Payment succeeded:', data.object.subscription);
+        const invoice = event.data.object;
+        console.log(
+          '🤑🤑 Subscription Payment Succeeded for:',
+          invoice.subscription,
+        );
+        await this.subsriptionUtil.handleCustomerPayment(invoice);
+
         break;
       case 'invoice.payment_failed':
-        console.log('❌ Payment failed:', data.object.subscription);
+        const failedInvoice = event.data.object;
+        console.log(
+          '❌ Payment Failed for Subscription:',
+          failedInvoice.subscription,
+        );
+        await this.subsriptionUtil.handleFailedPayment(failedInvoice);
+
         break;
       case 'customer.subscription.created':
-        console.log('🔄 Subscription created:', data.object.id);
+        const subscriptionCreated = event.data.object;
+        console.log('🔄 Subscription created:', subscriptionCreated.id);
+        await this.subsriptionUtil.handleCustomerSubscription(
+          subscriptionCreated,
+        );
+
         break;
       case 'customer.subscription.updated':
-        console.log('🔄 Subscription updated:', data.object.id);
+        const subscription = event.data.object;
+        console.log('🔄 Subscription Updated sub_id:', subscription.id);
+
+        await this.subsriptionUtil.handleSubscriptionRenewal(subscription);
+
         break;
+
       case 'customer.subscription.deleted':
-        console.log('🚫 Subscription canceled:', data.object.id);
-        break;
-      case 'customer.subscription.trial_will_end':
-        console.log('⏳ Trial ending:', data.object.id);
-        break;
-      default:
-        console.log(`Unhandled event type: ${type}`);
-        throw new HttpException(
-          'Unhandled event type',
-          HttpStatus.INTERNAL_SERVER_ERROR,
+        const canceledSubscription = event.data.object;
+        console.log('🚫 Subscription Canceled:', canceledSubscription.id);
+        await this.subsriptionUtil.handleSubscriptionCancellation(
+          canceledSubscription,
         );
+
+        break;
+
+      case 'customer.subscription.trial_will_end':
+        this.subsriptionUtil.sendExpiryReminder(event.data.object);
+        break;
+      case 'invoice.created':
+        // handleSubscriptionExpiringReminder(event.data.object);
+        console.log('✅ invoice.created successfully');
+        break;
+      case 'invoice.finalized':
+        // handleSubscriptionExpiringReminder(event.data.object);
+        console.log('✅ invoice.finalized successfully');
+        break;
+
+      default:
+        console.log(`Unhandled event type: ${event.type}`);
+        throw new ApiError(HttpStatus.BAD_REQUEST, 'unhandled event type');
     }
 
     return { received: true };

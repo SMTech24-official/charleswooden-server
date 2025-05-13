@@ -20,9 +20,15 @@ import { AnswerModule } from '@/modules/answer/answer.module';
 import { EventModule } from '@/modules/event/event.module';
 import { SubscriptionPlanModule } from '@/modules/subscription-plan/subscription-plan.module';
 import { SubscriptionModule } from '@/modules/subscription/subscription.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
+    HttpModule.register({
+      timeout: 5000,
+
+      maxRedirects: 5,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
@@ -63,9 +69,10 @@ import { SubscriptionModule } from '@/modules/subscription/subscription.module';
     BcryptService,
     WebSocketService,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard }, // authentication guard
     { provide: APP_GUARD, useClass: RolesGuard }, //authorization guard
   ],
+  exports: [HttpModule],
 })
 export class AppModule {}

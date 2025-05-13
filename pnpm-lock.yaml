@@ -44,6 +44,9 @@ importers:
       '@types/passport-local':
         specifier: ^1.0.38
         version: 1.0.38
+      axios:
+        specifier: ^1.9.0
+        version: 1.9.0
       bcrypt:
         specifier: ^5.1.1
         version: 5.1.1
