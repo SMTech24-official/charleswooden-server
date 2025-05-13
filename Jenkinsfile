@@ -22,6 +22,7 @@ stage('Deploy') {
                 cd /var/www/my-nodejs-app
                 npm install --production
                 npm run build
+                sksks lsk
                 pm2 restart app.js || pm2 start app.js
             """
         )
