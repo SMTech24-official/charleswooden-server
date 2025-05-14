@@ -1,9 +1,9 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { PrismaService } from '@/helper/prisma.service';
-import { ConfigService } from '@nestjs/config';
-import Stripe from 'stripe';
 import { BrevoService } from '@/email/brevo';
+import { PrismaService } from '@/helper/prisma.service';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PaymentStatus } from '@prisma/client';
+import Stripe from 'stripe';
 
 @Injectable()
 export class SubscriptionUtil {
@@ -220,7 +220,7 @@ export class SubscriptionUtil {
     return this.prisma.$transaction(async (tx) => {
       await tx.subscription.update({
         where: { id: existingSubscription.id },
-        data: { subscriptionStatus: 'CANCELLED' },
+        data: { subscriptionStatus: 'CANCELLED', cancelRequest: false },
       });
 
       await tx.customer.update({
@@ -361,11 +361,11 @@ export class SubscriptionUtil {
 
   async handleSubscriptionRenewal(subscription: Stripe.Subscription) {
     const metadata = subscription.metadata as {
-      CustomerId: string;
+      customerId: string;
       subscriptionPlanId: string;
     };
 
-    if (!metadata.CustomerId || !metadata.subscriptionPlanId) {
+    if (!metadata.customerId || !metadata.subscriptionPlanId) {
       throw new HttpException(
         'Missing subscription metadata',
         HttpStatus.BAD_REQUEST,
@@ -375,7 +375,7 @@ export class SubscriptionUtil {
     const existingSubscription = await this.prisma.subscription.findFirst({
       where: {
         stripeSubscriptionId: subscription.id,
-        customerId: metadata.CustomerId,
+        customerId: metadata.customerId,
       },
     });
 
@@ -409,7 +409,7 @@ export class SubscriptionUtil {
       });
 
       await tx.customer.update({
-        where: { id: metadata.CustomerId },
+        where: { id: metadata.customerId },
         data: {
           subscriptionStatus: 'ACTIVE',
           planName: plan.planName,

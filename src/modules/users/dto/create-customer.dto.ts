@@ -4,10 +4,10 @@ import { IsEmail, IsEnum, IsString, ValidateNested } from 'class-validator';
 
 export class CustomerDto {
   @IsString()
-  firstName: string;
+  partnerOneName: string;
 
   @IsString()
-  lastName: string;
+  partnerTwoName: string;
 }
 
 // export enum UserRole {

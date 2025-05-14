@@ -11,26 +11,20 @@ datasource db {
 }
 
 model User {
-  id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  username         String         @unique
-  email            String         @unique
-  contactNo        String         @unique
-  password         String
-  role             Role
-  avatar           String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  admin            Admin?
-  customer         Customer?
-  verifications    Verification[]
-  userStatus       UserStatus     @default(INACTIVE)
-  roomsSent        Room[]         @relation("SenderRelation")
-  roomsReceived    Room[]         @relation("ReceiverRelation")
-  roomParticipants RoomUser[]
-  chatsSent        Chat[]         @relation("SenderRelation")
-  chatsReceived    Chat[]         @relation("ReceiverRelation")
-  createdRooms     Room[]         @relation("CreatorRelation")
-  notifications    Notification[]
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  username      String         @unique
+  email         String         @unique
+  contactNo     String         @unique
+  password      String
+  role          Role
+  avatar        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  admin         Admin?
+  customer      Customer?
+  verifications Verification[]
+  userStatus    UserStatus     @default(ACTIVE)
+  notifications Notification[]
 
   @@unique([username, email, contactNo])
   @@map("users")
@@ -63,18 +57,30 @@ model Admin {
 model Customer {
   id                 String             @id @default(auto()) @map("_id") @db.ObjectId
   userId             String             @unique @db.ObjectId
-  firstName          String?
-  lastName           String?
   location           String?
+  preference         DietaryPreference?
   user               User               @relation(fields: [userId], references: [id])
   answers            Answer[]
   subscriptions      Subscription[]
   stripeCustomerId   String?            @unique
   planName           PlanName           @default(FREE)
+  partnerOneName     String
+  partnerTwoName     String
+  email              String?
+  coupleType         CoupleType?
+  children           Int?
+  grandChildren      Int?
+  address            String?
+  contactNo          String?
+  childrenAgeGroup   ChildrenAgeGroup?
+  industry           String?
+  birthDate          DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   Payment            Payment[]
+  relationShipStatus RelationshipStatus
   subscriptionStatus SubscriptionStatus @default(ACTIVE)
+  bookings           Booking[]
 
   @@map("customers")
 }
@@ -168,19 +174,33 @@ model Answer {
 }
 
 model Event {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  title       String
-  slug        String   @unique
-  description String
-  location    String?
-  date        DateTime
-  startTime   String
-  endTime     String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  images      Image[]
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  title           String
+  slug            String    @unique
+  description     String
+  location        String?
+  estimatedBudget String
+  date            DateTime
+  startTime       String
+  endTime         String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  images          Image[]
+  reviews         Review[]
+  bookings        Booking[]
 
   @@map("events")
+}
+
+model Booking {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  customerId String        @db.ObjectId
+  customer   Customer      @relation(fields: [customerId], references: [id])
+  event      Event?        @relation(fields: [eventId], references: [id])
+  eventId    String?       @db.ObjectId
+  status     BookingStatus
+
+  @@map("bookings")
 }
 
 model Image {
@@ -190,8 +210,21 @@ model Image {
   event     Event?   @relation(fields: [eventId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  review    Review?  @relation(fields: [reviewId], references: [id])
+  reviewId  String?  @db.ObjectId
 
   @@map("images")
+}
+
+model Review {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  rating  Float
+  content String
+  images  Image[]
+  event   Event?  @relation(fields: [eventId], references: [id])
+  eventId String? @db.ObjectId
+
+  @@map("reviews")
 }
 
 model Blog {
@@ -207,23 +240,10 @@ model Blog {
   @@map("blogs")
 }
 
-model RoomUser {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  roomId    String   @db.ObjectId
-  userId    String   @db.ObjectId
-  room      Room     @relation(fields: [roomId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, roomId])
-  @@map("room_users")
-}
-
 model Notification {
   id        String           @id @default(auto()) @map("_id") @db.ObjectId
   userId    String           @db.ObjectId
-  type      NotificationType 
+  type      NotificationType
   title     String
   body      String
   data      String?
@@ -233,48 +253,6 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id])
 
   @@map("notifications")
-}
-
-model Room {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  type        RoomType @default(GROUP) // Type: One-to-one or Group chat
-  name        String? // Name of the group (for group chats)
-  description String? // Description of the group (for group chats)  
-  img         String? // Image of the group (for group chats)
-  senderId    String?  @db.ObjectId
-  receiverId  String?  @db.ObjectId
-  creatorId   String   @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  sender   User? @relation("SenderRelation", fields: [senderId], references: [id])
-  receiver User? @relation("ReceiverRelation", fields: [receiverId], references: [id])
-  creator  User  @relation("CreatorRelation", fields: [creatorId], references: [id])
-
-  participants RoomUser[] // Relationship to participants (RoomUser table)
-  chat         Chat[]
-  userId       String?    @db.ObjectId
-
-  @@map("rooms")
-}
-
-model Chat {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  senderId   String   @db.ObjectId
-  receiverId String?  @db.ObjectId // Nullable for group chats
-  roomId     String   @db.ObjectId
-  message    String
-  images     String[]
-  isRead     Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Relationshipsb
-  sender   User  @relation("SenderRelation", fields: [senderId], references: [id])
-  receiver User? @relation("ReceiverRelation", fields: [receiverId], references: [id]) // Optional for group chats
-  room     Room  @relation(fields: [roomId], references: [id])
-
-  @@map("chats")
 }
 
 enum Role {
@@ -385,4 +363,49 @@ enum NotificationType {
 enum NotificationStatus {
   UNREAD
   READ
+}
+
+enum ChildrenAgeGroup {
+  INFANT // 0-1 years
+  TODDLER // 1-3 years
+  PRESCHOOL // 3-5 years
+  SCHOOL_AGE // 6-12 years
+  TEEN // 13-17 years
+  ADULT // 18+ years
+}
+
+enum RelationshipStatus {
+  SINGLE
+  IN_RELATIONSHIP
+  MARRIED
+  SEPARATED
+  DIVORCED
+  WIDOWED
+}
+
+enum CoupleType {
+  MF
+  FF
+  MM
+  OTHER
+}
+
+enum BookingStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum DietaryPreference {
+  OMNIVORE
+  VEGETARIAN
+  VEGAN
+  PESCATARIAN
+  KETO
+  PALEO
+  HALAL
+  KOSHER
+  GLUTEN_FREE
+  DAIRY_FREE
+  NUT_FREE
+  OTHER
 }

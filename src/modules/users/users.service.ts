@@ -129,6 +129,7 @@ export class UsersService {
       where: {
         OR: [{ email: data.email }, { username: data.email }],
       },
+      include: { admin: true, customer: true },
     });
   }
 
@@ -147,5 +148,9 @@ export class UsersService {
     return this.prisma.user.delete({
       where,
     });
+  }
+
+  async updatePassword({ id, password }: { id: string; password: string }) {
+    return this.prisma.user.update({ where: { id }, data: { password } });
   }
 }

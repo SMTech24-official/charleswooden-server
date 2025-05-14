@@ -50,12 +50,15 @@ export class SubscriptionController {
     };
   }
 
-  @Patch('cancel/:customerId')
+  @Patch('cancel/:id/:customerId')
   async cancel(
-    @Param('customerId') customerId: string,
     @Param('id') subscriptionId: string,
+    @Param('customerId') customerId: string,
     @Req() req: any,
   ) {
+    console.log(`see customer id`, customerId);
+    console.log(`subs id`, subscriptionId);
+
     try {
       await this.subscriptionService.cancelSubscription(
         customerId,

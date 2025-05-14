@@ -153,10 +153,10 @@ export class SubscriptionService {
       where: { userId: user.id },
     });
 
-    const iscustomerAuthenticated =
+    const isCustomerAuthenticated =
       user.role === Role.CUSTOMER && customerId === customer.id;
 
-    if (!iscustomerAuthenticated && user.role === Role.CUSTOMER) {
+    if (!isCustomerAuthenticated && user.role === Role.CUSTOMER) {
       throw new HttpException(
         'You cannot cancel another customer’s subscription',
         HttpStatus.FORBIDDEN,

@@ -3,14 +3,10 @@ pipeline {
 
     environment {
         // Define environment variables
-        APP_NAME = 'charleswooden-server'
+        APP_NAME = "charleswooden-server"
         REMOTE_DIR = "/var/www/${APP_NAME}"
-        DEPLOY_SERVER = 'deploy-server' // Matches Jenkins SSH Publisher config name
-        NODE_VERSION = 'NodeJS-18' // Node.js version configured in Jenkins > Tools
-    }
-
-    triggers {
-        githubPush()
+        DEPLOY_SERVER = "deploy-server" // Matches Jenkins SSH Publisher config name
+        NODE_VERSION = "NodeJS-18" // Node.js version configured in Jenkins > Tools
     }
 
     stages {
@@ -18,8 +14,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main', // Replace with your branch
-                     url: 'https://github.com/euhansarkar/charleswooden-server',
-                     credentialsId: 'charleswooden-server-secret' // GitHub PAT credentials ID
+                     url: 'https://github.com/yourname/yourrepo.git ',
+                     credentialsId: 'github-token' // GitHub PAT credentials ID
             }
         }
 
@@ -55,8 +51,8 @@ pipeline {
                                     configName: "${DEPLOY_SERVER}", // Jenkins SSH server config
                                     transfers: [
                                         transferSet(
-                                            sourceFiles: '**/*',
-                                            removePrefix: '.',
+                                            sourceFiles: "**/*",
+                                            removePrefix: ".",
                                             remoteDirectory: "${REMOTE_DIR}"
                                         )
                                     ],
@@ -68,7 +64,7 @@ pipeline {
                         // Step 2: Run deployment commands on the server
                         sshCommand(
                             hostname: "${DEPLOY_SERVER}",
-                            username: 'user', // SSH username
+                            username: "user", // SSH username
                             command: """
                                 # Set up environment
                                 export PATH="/usr/local/bin:\$PATH"
@@ -101,8 +97,8 @@ pipeline {
     // Optional: Notifications on failure
     post {
         failure {
-            echo '🚨 Deployment failed! Check Jenkins logs for details.'
-        // Add Slack/email notifications here if needed
+            echo "🚨 Deployment failed! Check Jenkins logs for details."
+            // Add Slack/email notifications here if needed
         }
     }
 }
