@@ -17,7 +17,7 @@ import { FileService } from '@/helper/file.service';
 import { ResponseService } from '@/utils/response';
 import { CustomFileFieldsInterceptor } from '@/helper/file_interceptor';
 
-@Controller('Reviews')
+@Controller('reviews')
 export class ReviewController {
   constructor(
     private readonly ReviewService: ReviewService,

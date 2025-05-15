@@ -22,6 +22,7 @@ import { SubscriptionPlanModule } from '@/modules/subscription-plan/subscription
 import { SubscriptionModule } from '@/modules/subscription/subscription.module';
 import { HttpModule } from '@nestjs/axios';
 import { BookingModule } from '@/modules/booking/booking.module';
+import { ReviewModule } from '@/modules/review/review.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { BookingModule } from '@/modules/booking/booking.module';
     EventModule,
     SubscriptionPlanModule,
     SubscriptionModule,
+    ReviewModule,
   ],
   controllers: [AppController],
   providers: [
