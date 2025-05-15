@@ -116,13 +116,13 @@ export class SubscriptionUtil {
               userId: customer.userId,
               title: 'Subscription Created',
               type: 'SUBSCRIPTION_REMINDER',
-              body: `New Customer subscribed: ${customer.firstName} ${customer.lastName}`,
+              body: `New Customer subscribed: ${customer.partnerOneName} `,
             },
             {
               userId: customer.userId,
               title: 'Subscription Created',
               type: 'SUBSCRIPTION_REMINDER',
-              body: `Welcome ${customer.firstName} ${customer.lastName}! You've successfully joined`,
+              body: `Welcome ${customer.partnerOneName}! You've successfully joined`,
             },
           ],
         });
@@ -315,7 +315,7 @@ export class SubscriptionUtil {
         ],
         subject: '🚨 Payment Failed for Your Subscription',
         htmlContent: `
-          <p>Hello ${customer.firstName},</p>
+          <p>Hello ${customer.partnerOneName},</p>
           <p>Your payment of ${amountDue} ${currency} has failed. 
           Please update your payment method to avoid cancellation.</p>
           <p><a href="${this.configService.get('FRONTEND_URL')}/update-payment">Update Payment</a></p>
@@ -346,7 +346,7 @@ export class SubscriptionUtil {
           ],
           subject: '🚫 Subscription Cancelled Due to Payment Failure',
           htmlContent: `
-            <p>Hello ${customer.firstName},</p>
+            <p>Hello ${customer.partnerOneName},</p>
             <p>Your subscription has been cancelled due to repeated failed payments.</p>
             <p>You can resubscribe anytime by updating your payment details.</p>
           `,
@@ -450,7 +450,7 @@ export class SubscriptionUtil {
         },
       ],
       subject: 'Your link cohort subscription is about to expire!',
-      htmlContent: `<p>Hello ${customer.firstName}, your link cohort subscription expires on ${expiryDate}. Renew now to avoid service interruption.</p>`,
+      htmlContent: `<p>Hello ${customer.partnerOneName}, your link cohort subscription expires on ${expiryDate}. Renew now to avoid service interruption.</p>`,
     });
   }
 }

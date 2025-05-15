@@ -77,7 +77,7 @@ model Customer {
   birthDate          DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
-  Payment            Payment[]
+  payments           Payment[]
   relationShipStatus RelationshipStatus
   subscriptionStatus SubscriptionStatus @default(ACTIVE)
   bookings           Booking[]
@@ -127,12 +127,15 @@ model Payment {
   currency           String
   paymentDate        DateTime
   paymentStatus      PaymentStatus
-  subscriptionId     String        @db.ObjectId
-  subscriptionPlanId String        @db.ObjectId
+  paymentSource      PaymentSource @default(SUBSCRIPTION)
+  bookingId          String?       @unique @db.ObjectId
+  subscriptionId     String?       @db.ObjectId
+  subscriptionPlanId String?       @db.ObjectId
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   customer           Customer      @relation(fields: [customerId], references: [id])
-  subscription       Subscription  @relation(fields: [subscriptionId], references: [id])
+  subscription       Subscription? @relation(fields: [subscriptionId], references: [id])
+  booking            Booking?      @relation(fields: [bookingId], references: [id])
 
   @@map("payments")
 }
@@ -199,6 +202,7 @@ model Booking {
   event      Event?        @relation(fields: [eventId], references: [id])
   eventId    String?       @db.ObjectId
   status     BookingStatus
+  payments   Payment?
 
   @@map("bookings")
 }
@@ -368,7 +372,7 @@ enum NotificationStatus {
 enum ChildrenAgeGroup {
   INFANT // 0-1 years
   TODDLER // 1-3 years
-  PRESCHOOL // 3-5 years
+  PRESCHOOL // 3-5 years        
   SCHOOL_AGE // 6-12 years
   TEEN // 13-17 years
   ADULT // 18+ years
@@ -408,4 +412,9 @@ enum DietaryPreference {
   DAIRY_FREE
   NUT_FREE
   OTHER
+}
+
+enum PaymentSource {
+  ONE_TYME
+  SUBSCRIPTION
 }

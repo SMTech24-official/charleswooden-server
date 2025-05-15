@@ -25,4 +25,7 @@ export class CreateEventDto {
   @IsString()
   @IsNotEmpty()
   endTime: string;
+
+  
+  estimatedBudget:string
 }

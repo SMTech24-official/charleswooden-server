@@ -97,8 +97,9 @@ export class UsersService {
 
       const customerCreation = await tx.customer.create({
         data: {
-          ...customerData,
+          // ...customerData,
           userId: userCreation?.id,
+          ...customerData
         },
       });
 

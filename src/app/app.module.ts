@@ -8,7 +8,7 @@ import { PrismaService } from '@/helper/prisma.service';
 import { BcryptService } from '@/utils/bcrypt.service';
 import { GlobalExceptionFilter } from '@/utils/global_exception';
 import { AppController } from './app.controller';
-import { WebSocketService } from '@/ws/websocket.service';
+// import { WebSocketService } from '@/ws/websocket.service';
 import { AuthModule } from '@/modules/auth/auth.module';
 import { BlogModule } from '@/modules/blog/blog.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -21,6 +21,7 @@ import { EventModule } from '@/modules/event/event.module';
 import { SubscriptionPlanModule } from '@/modules/subscription-plan/subscription-plan.module';
 import { SubscriptionModule } from '@/modules/subscription/subscription.module';
 import { HttpModule } from '@nestjs/axios';
+import { BookingModule } from '@/modules/booking/booking.module';
 
 @Module({
   imports: [
@@ -67,7 +68,8 @@ import { HttpModule } from '@nestjs/axios';
     UsersService,
     PrismaService,
     BcryptService,
-    WebSocketService,
+    // WebSocketService,
+    BookingModule,
     { provide: APP_FILTER, useClass: GlobalExceptionFilter },
     // { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard }, // authentication guard
