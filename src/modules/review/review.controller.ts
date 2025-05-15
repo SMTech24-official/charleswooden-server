@@ -11,11 +11,11 @@ import {
   HttpStatus,
   Query,
 } from '@nestjs/common';
-import { ReviewService } from './Review.service';
 import { ParseDataPipe } from '@/pipes/parse_data';
 import { FileService } from '@/helper/file.service';
 import { ResponseService } from '@/utils/response';
 import { CustomFileFieldsInterceptor } from '@/helper/file_interceptor';
+import { ReviewService } from './review.service';
 
 @Controller('reviews')
 export class ReviewController {
