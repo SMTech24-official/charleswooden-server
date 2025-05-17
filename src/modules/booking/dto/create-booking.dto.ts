@@ -16,6 +16,10 @@ export class CreateBookingDto {
   @IsString()
   eventId?: string;
 
+  @IsOptional()
+  @IsString()
+  paymentMethodId: string;
+
   @IsNotEmpty()
   @IsEnum(BookingStatusEnum, {
     message: `status must be a valid BookingStatus value: ${Object.values(BookingStatusEnum).join(', ')}`,

@@ -10,27 +10,32 @@ import {
   UploadedFile,
   HttpStatus,
   Query,
+  Req,
+  RawBodyRequest,
+  HttpException,
 } from '@nestjs/common';
 import { ParseDataPipe } from '@/pipes/parse_data';
-import { FileService } from '@/helper/file.service';
-import { CustomFileInterceptor } from '@/helper/file_interceptor_2';
 import { ResponseService } from '@/utils/response';
 import { BookingService } from './booking.service';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { UpdateBookingDto } from './dto/update-booking.dto';
+import { Request } from 'express';
+import { Public } from '../auth/auth.decorator';
 
-@Controller('Bookings')
+@Controller('bookings')
 export class BookingController {
   constructor(private readonly BookingService: BookingService) {}
 
   @Post()
   @Roles(Role.CUSTOMER)
-  async create(@Body(new ParseDataPipe()) createBookingDto: CreateBookingDto) {
-    const data = JSON.parse(JSON.stringify(createBookingDto));
-    const result = await this.BookingService.create({ ...data });
-
+  async create(
+    @Body() createBookingDto: CreateBookingDto,
+    @Req() req: Request,
+  ) {
+    const paylaod = createBookingDto;
+    const result = await this.BookingService.create({ ...paylaod }, req);
     return ResponseService.formatResponse({
       statusCode: HttpStatus.OK,
       message: `Booking created successfully`,
@@ -86,5 +91,19 @@ export class BookingController {
       message: `Booking deleted successfully`,
       data: result,
     });
+  }
+
+  @Public()
+  @Post('stripe/webhook')
+  async handleWebhook(@Req() req: RawBodyRequest<Request>) {
+    try {
+      const response = await this.BookingService.handleWebhook(req);
+      return response;
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Webhook handling failed',
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 }

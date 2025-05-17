@@ -13,7 +13,7 @@ import slugify from 'slugify';
 export class EventService {
   constructor(private prisma: PrismaService) {}
 
-  async create(payload: Prisma.EventCreateInput, images: string[]) {
+  async create(payload: any, images: string[]) {
     const slug = slugify(payload.title, { lower: true, strict: true });
 
     const isExists: Event | null = await this.prisma.event.findFirst({
