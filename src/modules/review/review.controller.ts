@@ -112,4 +112,14 @@ export class ReviewController {
       data: result,
     });
   }
+
+  @Delete('destroy/:id')
+  async destroy(@Param('id') id: string) {
+    const result = await this.ReviewService.destroy(id);
+    return ResponseService.formatResponse({
+      statusCode: HttpStatus.OK,
+      message: `Review deleted successfully`,
+      data: result,
+    });
+  }
 }

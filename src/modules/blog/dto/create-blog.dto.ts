@@ -1,9 +1,9 @@
 import { IsString } from 'class-validator';
 
 export class CreateBlogDto {
-  // @IsString()
+  @IsString()
   title: string;
 
-  // @IsString()
+  @IsString()
   description: string;
 }

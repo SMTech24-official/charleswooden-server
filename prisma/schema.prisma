@@ -173,6 +173,7 @@ model Answer {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
+  @@unique([customerId, questionId])
   @@map("answers")
 }
 
@@ -239,7 +240,6 @@ model Blog {
   description String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  imageId     String?  @db.ObjectId
 
   @@map("blogs")
 }

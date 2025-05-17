@@ -1,12 +1,11 @@
-import { HttpStatus, Injectable } from '@nestjs/common';
-import { CreateAnswerDto } from './dto/create-answer.dto';
-import { UpdateAnswerDto } from './dto/update-answer.dto';
 import { PrismaService } from '@/helper/prisma.service';
 import { IGenericResponse } from '@/interface/common';
-import { Answer, Prisma, Role, User } from '@prisma/client';
-import QueryBuilder from '@/utils/query_builder';
-import { Request } from 'express';
 import { ApiError } from '@/utils/api_error';
+import QueryBuilder from '@/utils/query_builder';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { Answer, Prisma, Role } from '@prisma/client';
+import { Request } from 'express';
+import { CreateAnswerDto } from './dto/create-answer.dto';
 
 @Injectable()
 export class AnswerService {
@@ -23,6 +22,26 @@ export class AnswerService {
     const allData = createAnswerDto?.map((item) => {
       return { ...item, customerId: isCustomerExists.id };
     });
+
+    console.dir(allData);
+
+    const isExists = await this.prisma.answer.findMany({
+      where: {
+        AND: [
+          { customerId: { in: allData.map((d) => d.customerId) } },
+          { questionId: { in: allData.map((d) => d.questionId) } },
+        ],
+      },
+      include: { question: true },
+    });
+    console.log(isExists);
+
+    if (isExists?.length > 0) {
+      throw new ApiError(
+        HttpStatus.CONFLICT,
+        `Yo've Already Answered These Questions ${isExists.map((q) => q.question.question)}`,
+      );
+    }
 
     return await this.prisma.answer.createMany({ data: allData });
   }

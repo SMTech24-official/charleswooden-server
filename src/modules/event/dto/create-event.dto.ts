@@ -1,4 +1,10 @@
-import { IsString, IsDate, IsOptional, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  IsDate,
+  IsOptional,
+  IsNotEmpty,
+  IsNumber,
+} from 'class-validator';
 import { Transform } from 'class-transformer';
 
 export class CreateEventDto {
@@ -26,6 +32,6 @@ export class CreateEventDto {
   @IsNotEmpty()
   endTime: string;
 
-  
-  estimatedBudget:string
+  @IsString()
+  estimatedBudget: string;
 }

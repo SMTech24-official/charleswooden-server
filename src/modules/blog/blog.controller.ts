@@ -22,6 +22,8 @@ import { ParseDataPipe } from '@/pipes/parse_data';
 import { FileService } from '@/helper/file.service';
 import { CustomFileInterceptor } from '@/helper/file_interceptor_2';
 import { ResponseService } from '@/utils/response';
+import { ParseFormDataInterceptor } from '@/helper/form_data_interceptor';
+import { Public } from '../auth/auth.decorator';
 
 @Controller('blogs')
 export class BlogController {
@@ -31,10 +33,10 @@ export class BlogController {
   ) {}
 
   @Post()
-  @UseInterceptors(CustomFileInterceptor('img'))
+  @UseInterceptors(CustomFileInterceptor('img'), ParseFormDataInterceptor)
   async create(
     @UploadedFile() file: Express.Multer.File,
-    @Body(new ParseDataPipe()) createBlogDto: string,
+    @Body() createBlogDto: CreateBlogDto,
   ) {
     let img: string | null = null;
     if (file) {
@@ -51,6 +53,7 @@ export class BlogController {
     });
   }
 
+  @Public()
   @Get()
   async findAll(@Query() query: Record<string, any>) {
     const result = await this.blogService.findAll(query);
@@ -61,6 +64,7 @@ export class BlogController {
     });
   }
 
+  @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const result = await this.blogService.findOne(id);
@@ -72,11 +76,11 @@ export class BlogController {
   }
 
   @Patch(':id')
-  @UseInterceptors(CustomFileInterceptor('img'))
+  @UseInterceptors(CustomFileInterceptor('img'), ParseFormDataInterceptor)
   async update(
     @Param('id') id: string,
     @UploadedFile() file?: Express.Multer.File,
-    @Body(new ParseDataPipe()) updateBlogDto?: string,
+    @Body(new ParseDataPipe()) updateBlogDto?: UpdateBlogDto,
   ) {
     let img: string | null = null;
     if (file) {

@@ -15,6 +15,8 @@ import { ResponseService } from '@/utils/response';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
 import { Public } from '../auth/auth.decorator';
+import { CreateCategoryDto } from './dto/create-category.dto';
+import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('categories')
 export class CategoryController {
@@ -22,7 +24,7 @@ export class CategoryController {
 
   @Post()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  async create(@Body(new ParseDataPipe()) createCategoryDto: string) {
+  async create(@Body() createCategoryDto: CreateCategoryDto) {
     const data = JSON.parse(JSON.stringify(createCategoryDto));
     const result = await this.CategoryService.create({ ...data });
 
@@ -60,7 +62,7 @@ export class CategoryController {
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async update(
     @Param('id') id: string,
-    @Body(new ParseDataPipe()) updateCategoryDto?: string,
+    @Body() updateCategoryDto?: UpdateCategoryDto,
   ) {
     const data = JSON.parse(JSON.stringify(updateCategoryDto));
     const result = await this.CategoryService.update(id, {

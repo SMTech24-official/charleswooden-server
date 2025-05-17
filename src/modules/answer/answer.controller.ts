@@ -30,7 +30,7 @@ export class AnswerController {
   ) {
     const result = await this.answerService.create(createAnswerDto, req?.user);
     return ResponseService.formatResponse({
-      statusCode: HttpStatus.CREATED,
+      statusCode: HttpStatus.OK,
       message: 'Answers submitted successfully',
       data: result,
     });

@@ -8,10 +8,14 @@ import { Request } from 'express';
 import { Event, Prisma, Role } from '@prisma/client';
 import { ApiError } from '@/utils/api_error';
 import slugify from 'slugify';
+import { FileService } from '@/helper/file.service';
 
 @Injectable()
 export class EventService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private fileService: FileService,
+  ) {}
 
   async create(payload: Prisma.EventCreateInput, images: string[]) {
     const slug = slugify(payload.title, { lower: true, strict: true });
@@ -158,5 +162,19 @@ export class EventService {
     });
 
     return result;
+  }
+
+  async destroy(id: string) {
+    const isImgExists = await this.prisma.image.findUnique({ where: { id } });
+
+    if (!isImgExists) {
+      throw new ApiError(HttpStatus.NOT_FOUND, `image not found!`);
+    }
+
+    if (isImgExists?.url) {
+      await this.fileService.deleteFromDigitalOcean(isImgExists?.url);
+    }
+
+    return isImgExists;
   }
 }

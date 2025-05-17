@@ -111,10 +111,10 @@ export class EventController {
     });
   }
 
-  @Delete(':id')
+  @Delete('destroy/:id')
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
   async remove(@Param('id') id: string) {
-    const result = await this.eventService.remove(id);
+    const result = await this.eventService.destroy(id);
     return ResponseService.formatResponse({
       statusCode: HttpStatus.OK,
       message: `Event deleted successfully`,
