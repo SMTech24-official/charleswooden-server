@@ -4,6 +4,7 @@ import { ApiError } from '@/utils/api_error';
 import QueryBuilder from '@/utils/query_builder';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Customer, Prisma, Role } from '@prisma/client';
+import { UpdateCustomerDto } from './dto/update-Customer.dto';
 
 @Injectable()
 export class CustomerService {
@@ -61,7 +62,7 @@ export class CustomerService {
     });
   }
 
-  async update(id: string, data: Prisma.UserUpdateInput) {
+  async update(id: string, data: UpdateCustomerDto) {
     const { customer, ...user } = data;
 
     const isUserExists = await this.findOne(id);
@@ -87,7 +88,10 @@ export class CustomerService {
       return userUpdation;
     });
 
-    return await this.prisma.user.findUnique({ where: { id: result?.id } });
+    return await this.prisma.user.findUnique({
+      where: { id: result?.id },
+      include: { customer: true },
+    });
   }
 
   async remove(id: string) {
@@ -98,11 +102,19 @@ export class CustomerService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      const CustomerDeletion = await this.prisma.customer.delete({
+      await tx.answer.findMany({
+        where: { customerId: isUserExists?.customer?.id },
+      });
+
+      await tx.booking.findMany({
+        where: { customerId: isUserExists?.customer?.id },
+      });
+
+      const CustomerDeletion = await tx.customer.delete({
         where: { id: isUserExists?.customer.id },
       });
 
-      const userDeletion = await this.prisma.user.delete({
+      const userDeletion = await tx.user.delete({
         where: { id: isUserExists.id },
       });
       return userDeletion;

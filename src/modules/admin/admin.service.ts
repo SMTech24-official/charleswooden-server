@@ -4,6 +4,7 @@ import { ApiError } from '@/utils/api_error';
 import QueryBuilder from '@/utils/query_builder';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Admin, Prisma, Role } from '@prisma/client';
+import { UpdateAdminDto } from './dto/update-admin.dto';
 
 type DailyCount = {
   date: string;
@@ -66,8 +67,10 @@ export class AdminService {
     });
   }
 
-  async update(id: string, data: Prisma.UserUpdateInput) {
+  async update(id: string, data: UpdateAdminDto) {
     const { admin, ...user } = data;
+
+    console.log(`see admin`, user);
 
     const isUserExists = await this.findOne(id);
 
@@ -92,7 +95,10 @@ export class AdminService {
       return userUpdation;
     });
 
-    return await this.prisma.user.findUnique({ where: { id: result?.id } });
+    return await this.prisma.user.findUnique({
+      where: { id: result?.id },
+      include: { admin: true },
+    });
   }
 
   async remove(id: string) {
