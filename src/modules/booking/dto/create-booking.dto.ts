@@ -1,4 +1,10 @@
-import { IsEnum, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export enum BookingStatusEnum {
   PENDING = 'PENDING',

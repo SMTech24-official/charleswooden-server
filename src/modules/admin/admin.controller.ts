@@ -1,7 +1,6 @@
 import {
   Controller,
   Get,
-  Post,
   Body,
   Patch,
   Param,
@@ -9,18 +8,25 @@ import {
   Query,
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
-import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
+import { Public } from '../auth/auth.decorator';
 
-@Controller('admin')
+@Controller('admins')
 export class AdminController {
   constructor(private readonly adminService: AdminService) {}
 
-  @Post()
+  @Public()
+  @Get('analytics')
+  // @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  analytics(@Query() query: Record<string, any>) {
+    return this.adminService.getDashboardAnalytics(query);
+  }
+
+  @Get()
   @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-  create(@Query() query: Record<string, any>) {
+  findAll(@Query() query: Record<string, any>) {
     return this.adminService.findAll(query);
   }
 

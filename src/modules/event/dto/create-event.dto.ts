@@ -6,7 +6,6 @@ import {
   IsNumber,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-
 export class CreateEventDto {
   @IsString()
   @IsNotEmpty()
@@ -34,4 +33,7 @@ export class CreateEventDto {
 
   @IsString()
   estimatedBudget: string;
+
+  @IsNumber()
+  entryFee: number;
 }
