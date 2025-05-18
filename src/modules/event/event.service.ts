@@ -17,7 +17,7 @@ export class EventService {
     private fileService: FileService,
   ) {}
 
-  async create(payload: Prisma.EventCreateInput, images: string[]) {
+  async create(payload: any, images: string[]) {
     const slug = slugify(payload.title, { lower: true, strict: true });
 
     const isExists: Event | null = await this.prisma.event.findFirst({

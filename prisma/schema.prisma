@@ -187,6 +187,7 @@ model Event {
   date            DateTime
   startTime       String
   endTime         String
+  entryFee        Float
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   images          Image[]
@@ -197,13 +198,14 @@ model Event {
 }
 
 model Booking {
-  id         String        @id @default(auto()) @map("_id") @db.ObjectId
-  customerId String        @db.ObjectId
-  customer   Customer      @relation(fields: [customerId], references: [id])
-  event      Event?        @relation(fields: [eventId], references: [id])
-  eventId    String?       @db.ObjectId
-  status     BookingStatus
-  payments   Payment?
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  customerId    String        @db.ObjectId
+  eventId       String        @db.ObjectId
+  customer      Customer      @relation(fields: [customerId], references: [id])
+  event         Event         @relation(fields: [eventId], references: [id])
+  status        BookingStatus
+  paymentSource PaymentSource @default(SUBSCRIPTION)
+  payments      Payment?
 
   @@map("bookings")
 }
@@ -257,6 +259,11 @@ model Notification {
   user      User             @relation(fields: [userId], references: [id])
 
   @@map("notifications")
+}
+
+enum PaymentSource {
+  SUBSCRIPTION
+  SINGLE
 }
 
 enum Role {
@@ -397,6 +404,7 @@ enum CoupleType {
 enum BookingStatus {
   ACTIVE
   CANCELLED
+  PENDING
 }
 
 enum DietaryPreference {
@@ -412,9 +420,4 @@ enum DietaryPreference {
   DAIRY_FREE
   NUT_FREE
   OTHER
-}
-
-enum PaymentSource {
-  ONE_TYME
-  SUBSCRIPTION
 }

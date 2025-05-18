@@ -1,2 +1,0 @@
-set-alias -name pn -value pnpm
-New-Alias -Name pn -Value pnpm
