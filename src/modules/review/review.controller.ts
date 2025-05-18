@@ -118,7 +118,7 @@ export class ReviewController {
     const result = await this.ReviewService.destroy(id);
     return ResponseService.formatResponse({
       statusCode: HttpStatus.OK,
-      message: `Review deleted successfully`,
+      message: `Image deleted successfully`,
       data: result,
     });
   }

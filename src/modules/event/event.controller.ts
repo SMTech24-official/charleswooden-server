@@ -117,7 +117,7 @@ export class EventController {
     const result = await this.eventService.destroy(id);
     return ResponseService.formatResponse({
       statusCode: HttpStatus.OK,
-      message: `Event deleted successfully`,
+      message: `Image deleted successfully`,
       data: result,
     });
   }

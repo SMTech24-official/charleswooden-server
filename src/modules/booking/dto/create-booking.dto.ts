@@ -1,10 +1,9 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsMongoId, IsNotEmpty, IsString } from 'class-validator';
 
 export enum BookingStatusEnum {
   PENDING = 'PENDING',
   CONFIRMED = 'CONFIRMED',
   CANCELLED = 'CANCELLED',
-  // Add all possible values exactly as in your Prisma schema
 }
 
 export class CreateBookingDto {
@@ -12,8 +11,7 @@ export class CreateBookingDto {
   @IsString()
   customerId: string;
 
-  @IsOptional()
-  @IsString()
+  @IsMongoId()
   eventId?: string;
 
   @IsNotEmpty()

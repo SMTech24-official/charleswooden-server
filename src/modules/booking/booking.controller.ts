@@ -6,14 +6,10 @@ import {
   Patch,
   Param,
   Delete,
-  UseInterceptors,
-  UploadedFile,
   HttpStatus,
   Query,
 } from '@nestjs/common';
 import { ParseDataPipe } from '@/pipes/parse_data';
-import { FileService } from '@/helper/file.service';
-import { CustomFileInterceptor } from '@/helper/file_interceptor_2';
 import { ResponseService } from '@/utils/response';
 import { BookingService } from './booking.service';
 import { Roles } from '../roles/roles.decorator';
@@ -64,7 +60,7 @@ export class BookingController {
   @Roles(Role.ADMIN, Role.CUSTOMER)
   async update(
     @Param('id') id: string,
-    @Body(new ParseDataPipe()) updateBookingDto?: UpdateBookingDto,
+    @Body() updateBookingDto?: UpdateBookingDto,
   ) {
     const data = JSON.parse(JSON.stringify(updateBookingDto));
     const result = await this.BookingService.update(id, {
