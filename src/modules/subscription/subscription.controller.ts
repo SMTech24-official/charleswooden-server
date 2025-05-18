@@ -19,7 +19,7 @@ import { Role } from '@/enum/role.enum';
 import { SubscriptionService } from './subscription.service';
 import { Request } from 'express';
 import { Public } from '../auth/auth.decorator';
-import { SkipThrottle } from '@nestjs/throttler';
+import { ResponseService } from '@/utils/response';
 
 @Controller('subscriptions')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -33,10 +33,12 @@ export class SubscriptionController {
       dto,
       req?.user,
     );
-    return {
-      statusCode: HttpStatus.CREATED,
+
+    return ResponseService.formatResponse({
+      statusCode: HttpStatus.OK,
+      message: 'Subscription Created successfully',
       data: subscription,
-    };
+    });
   }
 
   @Get()
@@ -44,10 +46,11 @@ export class SubscriptionController {
     const subscriptions = await this.subscriptionService.getSubscriptions(
       req?.user,
     );
-    return {
+    return ResponseService.formatResponse({
       statusCode: HttpStatus.OK,
+      message: 'Subscriptions Found successfully',
       data: subscriptions,
-    };
+    });
   }
 
   @Patch('cancel/:id/:customerId')
@@ -56,19 +59,17 @@ export class SubscriptionController {
     @Param('customerId') customerId: string,
     @Req() req: any,
   ) {
-    console.log(`see customer id`, customerId);
-    console.log(`subs id`, subscriptionId);
-
     try {
       await this.subscriptionService.cancelSubscription(
         customerId,
         subscriptionId,
         req?.user,
       );
-      return {
+      return ResponseService.formatResponse({
         statusCode: HttpStatus.OK,
-        message: 'Subscription canceled successfully.',
-      };
+        message: 'Subscription Cancelled successfully',
+        data: null,
+      });
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to cancel subscription',
@@ -92,10 +93,11 @@ export class SubscriptionController {
           dto,
           req?.user,
         );
-      return {
-        statusCode: HttpStatus.OK,
-        data: updatedSubscription,
-      };
+        return ResponseService.formatResponse({
+          statusCode: HttpStatus.OK,
+          message: 'Subscription Upgraded successfully',
+          data: updatedSubscription,
+        });
     } catch (error) {
       throw new HttpException(
         error.message || 'Failed to update subscription',

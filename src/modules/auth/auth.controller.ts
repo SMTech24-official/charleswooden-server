@@ -36,6 +36,16 @@ export class AuthController {
     return this.authService.getMe(user);
   }
 
+  @Post('change-password')
+  async changePassword(
+    @Body() data: { prevPass: string; newPass: string },
+    @Req() req: Request,
+  ) {
+    const user: any = req?.user;
+    const id: string = user?.id;
+    return this.authService.changePassword({ ...data, id });
+  }
+
   @Post('forgot-password')
   async forgotPasswod(@Body() data: { email: string }) {
     return await this.authService.forgetPassword({ email: data?.email });

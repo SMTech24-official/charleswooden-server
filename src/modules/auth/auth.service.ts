@@ -68,21 +68,47 @@ export class AuthService {
       throw new ApiError(HttpStatus.NOT_FOUND, `user not found`);
     }
 
-    if (user.role === Role.CUSTOMER) {
-      const getAllBookings = await this.prisma.booking.findMany({
-        where: { customer: { userId: isUserExists?.id } },
-        include: {
-          customer: { include: { bookings: { include: { event: true } } } },
-        },
-      });
+    return isUserExists;
+  }
 
-      // let running: 0, attended: 0, cancelled: 0;
-      // const differs = getAllBookings?.map((event: Event) => {
+  async changePassword({
+    id,
+    prevPass,
+    newPass,
+  }: {
+    id: string;
+    prevPass: string;
+    newPass: string;
+  }) {
+    const isUserExists = await this.prisma.user.findUnique({ where: { id } });
 
-      //   if(event.)
-
-      // });
+    if (!isUserExists) {
+      throw new ApiError(HttpStatus.NOT_FOUND, `user not found`);
     }
+
+    const isPasswordMatched = await this.bcryptService.compare(
+      prevPass,
+      isUserExists.password!,
+    );
+
+    if (!isPasswordMatched) {
+      throw new ApiError(HttpStatus.UNAUTHORIZED, 'Password is not matched!');
+    }
+
+    const hashPassword = await this.bcryptService.hash(newPass);
+
+    const changePassword = await this.prisma.user.update({
+      where: { id: isUserExists?.id },
+      data: {
+        password: hashPassword,
+      },
+    });
+
+    if (!changePassword) {
+      throw new ApiError(HttpStatus.NOT_FOUND, `password not updated`);
+    }
+
+    return 'password updated';
   }
 
   async forgetPassword({ email }: { email: string }) {
