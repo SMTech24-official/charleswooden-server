@@ -24,6 +24,7 @@ import { HttpModule } from '@nestjs/axios';
 import { BookingModule } from '@/modules/booking/booking.module';
 import { ReviewModule } from '@/modules/review/review.module';
 import { AdminModule } from '@/modules/admin/admin.module';
+import { CustomerModule } from '@/modules/customer/customer.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { AdminModule } from '@/modules/admin/admin.module';
     SubscriptionModule,
     ReviewModule,
     AdminModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [

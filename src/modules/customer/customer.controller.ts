@@ -1,34 +1,46 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { CustomerService } from './customer.service';
-import { CreateCustomerDto } from './dto/create-customer.dto';
-import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { UpdateCustomerDto } from './dto/update-Customer.dto';
+import { Roles } from '../roles/roles.decorator';
+import { Role } from '@/enum/role.enum';
 
-@Controller('customer')
+@Controller('Customer')
 export class CustomerController {
-  constructor(private readonly customerService: CustomerService) {}
+  constructor(private readonly CustomerService: CustomerService) {}
 
   @Post()
-  create(@Body() createCustomerDto: CreateCustomerDto) {
-    return this.customerService.create(createCustomerDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.customerService.findAll();
+  @Roles(Role.CUSTOMER, Role.SUPER_ADMIN)
+  create(@Query() query: Record<string, any>) {
+    return this.CustomerService.findAll(query);
   }
 
   @Get(':id')
+  @Roles(Role.CUSTOMER, Role.SUPER_ADMIN, Role.CUSTOMER)
   findOne(@Param('id') id: string) {
-    return this.customerService.findOne(+id);
+    return this.CustomerService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCustomerDto: UpdateCustomerDto) {
-    return this.customerService.update(+id, updateCustomerDto);
+  @Roles(Role.CUSTOMER, Role.SUPER_ADMIN, Role.CUSTOMER)
+  update(
+    @Param('id') id: string,
+    @Body() updateCustomerDto: UpdateCustomerDto,
+  ) {
+    return this.CustomerService.update(id, updateCustomerDto);
   }
 
   @Delete(':id')
+  @Roles(Role.CUSTOMER, Role.SUPER_ADMIN, Role.CUSTOMER)
   remove(@Param('id') id: string) {
-    return this.customerService.remove(+id);
+    return this.CustomerService.remove(id);
   }
 }

@@ -1,26 +1,113 @@
-import { Injectable } from '@nestjs/common';
-import { CreateCustomerDto } from './dto/create-customer.dto';
-import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { PrismaService } from '@/helper/prisma.service';
+import { IGenericResponse } from '@/interface/common';
+import { ApiError } from '@/utils/api_error';
+import QueryBuilder from '@/utils/query_builder';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { Customer, Prisma, Role } from '@prisma/client';
 
 @Injectable()
 export class CustomerService {
-  create(createCustomerDto: CreateCustomerDto) {
-    return 'This action adds a new customer';
+  constructor(private prisma: PrismaService) {}
+
+  async findAll(
+    query: Record<string, any>,
+  ): Promise<IGenericResponse<Customer[]>> {
+    const populateFields = query.populate
+      ? query.populate
+          .split(',')
+          .reduce((acc: Record<string, boolean>, field) => {
+            acc[field] = true;
+            return acc;
+          }, {})
+      : {};
+
+    const queryBuilder = new QueryBuilder(this.prisma.user, query);
+    const result = await queryBuilder
+      .range()
+      .search([])
+      .filter([], [])
+      .sort()
+      .paginate()
+      .fields()
+      .rawFilter({ role: Role.CUSTOMER })
+      .populate(populateFields)
+      .execute();
+
+    const meta = await queryBuilder.countTotal();
+
+    return { meta, data: result };
   }
 
-  findAll() {
-    return `This action returns all customer`;
+  async findOne(id: string) {
+    let isCustomerExists = await this.prisma.customer
+      .findUnique({
+        where: { id },
+      })
+      .catch(() => null);
+
+    if (!isCustomerExists) {
+      isCustomerExists = await this.prisma.customer.findUnique({
+        where: { userId: id },
+      });
+    }
+
+    if (!isCustomerExists) {
+      throw new ApiError(HttpStatus.NOT_FOUND, 'Customer Not Found');
+    }
+
+    return await this.prisma.user.findUnique({
+      where: { id: isCustomerExists?.userId },
+      include: { customer: true },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} customer`;
+  async update(id: string, data: Prisma.UserUpdateInput) {
+    const { customer, ...user } = data;
+
+    const isUserExists = await this.findOne(id);
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const CustomerUpdation = await this.prisma.customer.update({
+        where: { id: isUserExists?.customer?.id },
+        data: { ...(customer as any) },
+      });
+
+      if (!CustomerUpdation) {
+        throw new ApiError(HttpStatus.NOT_FOUND, `Customer updation failed`);
+      }
+
+      const userUpdation = await this.prisma.user.update({
+        where: { id: isUserExists?.id },
+        data: { ...user },
+      });
+
+      if (!userUpdation) {
+        throw new ApiError(HttpStatus.NOT_FOUND, `user updated`);
+      }
+      return userUpdation;
+    });
+
+    return await this.prisma.user.findUnique({ where: { id: result?.id } });
   }
 
-  update(id: number, updateCustomerDto: UpdateCustomerDto) {
-    return `This action updates a #${id} customer`;
-  }
+  async remove(id: string) {
+    const isUserExists = await this.findOne(id);
 
-  remove(id: number) {
-    return `This action removes a #${id} customer`;
+    if (!isUserExists) {
+      throw new ApiError(HttpStatus.NOT_FOUND, `user not found`);
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      const CustomerDeletion = await this.prisma.customer.delete({
+        where: { id: isUserExists?.customer.id },
+      });
+
+      const userDeletion = await this.prisma.user.delete({
+        where: { id: isUserExists.id },
+      });
+      return userDeletion;
+    });
+
+    return 'user deleted successfully';
   }
 }
