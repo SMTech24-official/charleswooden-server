@@ -4,7 +4,7 @@ import { ApiError } from '@/utils/api_error';
 import QueryBuilder from '@/utils/query_builder';
 import { HttpStatus, Injectable } from '@nestjs/common';
 import { Customer, Prisma, Role } from '@prisma/client';
-import { UpdateCustomerDto } from './dto/update-Customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
 export class CustomerService {

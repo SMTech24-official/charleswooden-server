@@ -10,7 +10,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { CustomerService } from './customer.service';
-import { UpdateCustomerDto } from './dto/update-Customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Roles } from '../roles/roles.decorator';
 import { Role } from '@/enum/role.enum';
 import { ResponseService } from '@/utils/response';
